@@ -1,18 +1,13 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id("spendlens.android.application")
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.example.spendlens"
-    compileSdk {
-        version = release(37)
-    }
 
     defaultConfig {
         applicationId = "com.example.spendlens"
-        minSdk = 24
-        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -25,10 +20,6 @@ android {
                 enable = false
             }
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
         compose = true
