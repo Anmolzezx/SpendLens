@@ -22,5 +22,9 @@ gradlePlugin {
             id = "spendlens.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
         }
+        register("jvmLibrary") {
+            id = "spendlens.jvm.library"
+            implementationClass = "JvmLibraryConventionPlugin"
+        }
     }
 }
