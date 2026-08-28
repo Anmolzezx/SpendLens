@@ -1,4 +1,4 @@
-package com.example.spendlens
+package com.spendlens
 
 import org.junit.Test
 

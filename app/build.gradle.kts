@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    namespace = "com.example.spendlens"
+    namespace = "com.spendlens"
 
     defaultConfig {
-        applicationId = "com.example.spendlens"
+        applicationId = "com.spendlens"
         versionCode = 1
         versionName = "1.0"
 
@@ -27,6 +27,8 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.designsystem)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
