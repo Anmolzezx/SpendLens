@@ -1,0 +1,35 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{kt,kts}]
+max_line_length = 120
+
+# ktlint_official, not intellij_idea. The IntelliJ style collapses any parameter list that fits on
+# one line, which turns every Compose signature into a wide single line and makes each later
+# parameter change a whole-line diff. ktlint_official forces multi-line signatures past two
+# parameters and requires the trailing comma that keeps those diffs to one line.
+ktlint_code_style = ktlint_official
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# @Composable functions are PascalCase by convention, which the function-naming rule otherwise flags.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Off: this rule rewrites `val x = Foo(\n ... )` into `val x =\n    Foo(\n ... )`, adding an indent
+# level to every colour scheme, style object and preview fixture in the codebase. It buys no
+# clarity and costs a level of nesting in exactly the files that are already deeply nested.
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_function-expression-body = disabled
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

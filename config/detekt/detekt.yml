@@ -1,0 +1,38 @@
+# Overrides on top of detekt's defaults (buildUponDefaultConfig = true).
+# Only deviations live here — the default ruleset stays in force for everything else.
+#
+# Schema is detekt 2.x, which renamed several 1.x keys (thresholds became `allowed*`, and the
+# top-level `build:` block moved to `failOnSeverity` on the Gradle extension).
+
+complexity:
+  LongParameterList:
+    # Composables legitimately take many parameters: state in, one lambda per event out. Hoisting
+    # them into a wrapper object is the anti-pattern, not the fix.
+    allowedFunctionParameters: 8
+    allowedConstructorParameters: 10
+    ignoreDefaultParameters: true
+  TooManyFunctions:
+    # A screen file holds its content composable plus one preview per UI state.
+    allowedFunctionsPerFile: 20
+    allowedFunctionsPerClass: 20
+  LongMethod:
+    # A composable is a linear declaration of a layout, not a procedure. A `when` with a branch per
+    # UI state, or a Column with six rows in it, is long without being complex — splitting it to
+    # satisfy a line count adds indirection and reads worse. Cyclomatic complexity still applies.
+    ignoreAnnotated: [ 'Composable' ]
+
+naming:
+  FunctionNaming:
+    # @Composable functions are PascalCase — the Compose convention, not a violation.
+    ignoreAnnotated: [ 'Composable' ]
+
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: true
+  MaxLineLength:
+    maxLineLength: 120
+  ForbiddenComment:
+    # TODOs here are deliberate and point at named phases of the roadmap.
+    active: false

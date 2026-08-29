@@ -2,6 +2,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // ktlint-gradle publishes only to the plugin portal, not Maven Central.
+        gradlePluginPortal()
     }
     versionCatalogs {
         // Without this, `libs.` accessors don't exist inside the included build.
