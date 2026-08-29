@@ -30,6 +30,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # --continue so one module's style violation doesn't hide another's.
+      - name: Static analysis
+        run: ./gradlew ktlintCheck detekt --continue
+
       - name: Unit tests
         run: ./gradlew test
 
