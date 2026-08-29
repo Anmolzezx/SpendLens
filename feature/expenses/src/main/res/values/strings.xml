@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Names are prefixed because resources from library modules are merged into one namespace
+         at build time, so an unprefixed "title" would collide across features. -->
+    <string name="expenses_title">Expenses</string>
+    <string name="expenses_add">Add</string>
+    <string name="expenses_month_total">This month</string>
+    <string name="expenses_uncategorised">Uncategorised</string>
+    <string name="expenses_receipt">Receipt</string>
+
+    <string name="expenses_sync_pending">Pending</string>
+    <string name="expenses_sync_conflict">Conflict</string>
+
+    <plurals name="expenses_pending_count">
+        <item quantity="one">%d not synced</item>
+        <item quantity="other">%d not synced</item>
+    </plurals>
+
+    <string name="expenses_empty_title">No expenses yet</string>
+    <string name="expenses_empty_description">Scan a receipt or add one by hand — everything works offline.</string>
+    <string name="expenses_empty_action">Scan a receipt</string>
+
+    <string name="expenses_empty_filtered_title">Nothing matches those filters</string>
+    <string name="expenses_empty_filtered_description">Try widening the date range or clearing a category.</string>
+
+    <string name="expenses_error_title">Couldn\'t load expenses</string>
+</resources>
