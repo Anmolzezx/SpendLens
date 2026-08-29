@@ -11,8 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import com.spendlens.core.designsystem.theme.SpendLensTheme
-import com.spendlens.feature.expenses.list.ExpenseListRoute
+import com.spendlens.navigation.SpendLensNavHost
 
 class MainActivity : ComponentActivity() {
 
@@ -47,15 +48,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/**
- * Placeholder host. This becomes the NavHost from §7 once there is a second screen to navigate to;
- * the empty lambdas below are the call sites that will grow into `navController.navigate(...)`.
- */
 @Composable
 private fun SpendLensApp() {
-    ExpenseListRoute(
-        onExpenseClick = {},
-        onAddExpenseClick = {},
+    SpendLensNavHost(
+        navController = rememberNavController(),
         modifier = Modifier.fillMaxSize(),
     )
 }
