@@ -38,7 +38,11 @@ object SampleCategories {
 
 object SampleExpenses {
 
-    /** Visible expenses — tombstones excluded, newest first, as the list screen will show them. */
+    /**
+     * Visible expenses, tombstones excluded. Roughly newest-first, but **not** guaranteed sorted —
+     * consumers sort explicitly, the same way the Room query will `ORDER BY occurred_at DESC`.
+     * Relying on fixture order would hide a missing sort in the code under test.
+     */
     val all: List<Expense> = listOf(
         expense(
             id = "exp-01",
