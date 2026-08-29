@@ -25,3 +25,5 @@ captures/
 # External Native Build
 .externalNativeBuild/
 .cxx/
+
+PROGRESS.md
