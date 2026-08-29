@@ -40,5 +40,9 @@ gradlePlugin {
             id = "spendlens.android.library.compose"
             implementationClass = "AndroidLibraryComposeConventionPlugin"
         }
+        register("androidFeature") {
+            id = "spendlens.android.feature"
+            implementationClass = "AndroidFeatureConventionPlugin"
+        }
     }
 }
