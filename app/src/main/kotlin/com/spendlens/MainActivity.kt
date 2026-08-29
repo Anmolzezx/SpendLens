@@ -8,13 +8,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
-import com.spendlens.core.designsystem.component.EmptyState
 import com.spendlens.core.designsystem.theme.SpendLensTheme
+import com.spendlens.feature.expenses.list.ExpenseListRoute
 
 class MainActivity : ComponentActivity() {
 
@@ -50,20 +48,16 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Placeholder host. This becomes the NavHost from §7 once `feature:expenses` lands; for now it
- * exists to prove the app is rendering through `core:designsystem` rather than the wizard theme.
+ * Placeholder host. This becomes the NavHost from §7 once there is a second screen to navigate to;
+ * the empty lambdas below are the call sites that will grow into `navController.navigate(...)`.
  */
 @Composable
 private fun SpendLensApp() {
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-        EmptyState(
-            title = "No expenses yet",
-            description = "Scan a receipt or add one by hand — everything works offline.",
-            modifier = Modifier.padding(padding),
-            actionLabel = "Add an expense",
-            onAction = {},
-        )
-    }
+    ExpenseListRoute(
+        onExpenseClick = {},
+        onAddExpenseClick = {},
+        modifier = Modifier.fillMaxSize(),
+    )
 }
 
 /** Matches the scrims the framework draws behind 3-button navigation. */
