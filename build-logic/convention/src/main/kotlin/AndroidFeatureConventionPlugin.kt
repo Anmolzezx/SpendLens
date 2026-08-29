@@ -1,6 +1,8 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.project
 
 /**
@@ -18,12 +20,18 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 apply("org.jetbrains.kotlin.plugin.serialization")
             }
 
+            val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
             dependencies {
                 // Every feature gets these two and nothing else from the project. Notably absent:
                 // any other feature. Cross-feature navigation is resolved in :app by passing
                 // lambdas down, which is what keeps features independently buildable.
                 "implementation"(project(":core:model"))
                 "implementation"(project(":core:designsystem"))
+
+                // A feature owns its own navigation routes and graph, so it needs the navigation
+                // API. kotlinx-serialization-json is what type-safe routes encode arguments with.
+                "implementation"(libs.findLibrary("androidx-navigation-compose").get())
+                "implementation"(libs.findLibrary("kotlinx-serialization-json").get())
             }
         }
     }
