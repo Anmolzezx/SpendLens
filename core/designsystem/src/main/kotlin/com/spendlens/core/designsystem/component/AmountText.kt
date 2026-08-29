@@ -12,11 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.spendlens.core.designsystem.preview.ThemePreviews
-import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Spacing
+import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.amounts
-
-enum class AmountEmphasis { LARGE, MEDIUM, SMALL }
 
 /**
  * Displays a pre-formatted money string in tabular figures.
@@ -41,7 +39,7 @@ fun AmountText(
             AmountEmphasis.SMALL -> MaterialTheme.amounts.small
         },
         maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        overflow = TextOverflow.Ellipsis,
     )
 }
 

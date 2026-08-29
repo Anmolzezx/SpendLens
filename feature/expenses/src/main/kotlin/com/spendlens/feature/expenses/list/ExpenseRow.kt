@@ -21,8 +21,8 @@ import com.spendlens.core.designsystem.component.AmountText
 import com.spendlens.core.designsystem.component.CategoryChip
 import com.spendlens.core.designsystem.component.StatusBadge
 import com.spendlens.core.designsystem.preview.ThemePreviews
-import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Spacing
+import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Tone
 import com.spendlens.core.model.SyncState
 import com.spendlens.feature.expenses.R
@@ -104,11 +104,12 @@ private fun secondaryLine(expense: ExpenseUiModel): String =
  * chips is noise that makes the two states that *do* need attention harder to spot.
  */
 @Composable
-private fun SyncState.badge(): Pair<String, Tone>? = when (this) {
-    SyncState.SYNCED -> null
-    SyncState.PENDING -> stringResource(R.string.expenses_sync_pending) to Tone.WARNING
-    SyncState.CONFLICT -> stringResource(R.string.expenses_sync_conflict) to Tone.CRITICAL
-}
+private fun SyncState.badge(): Pair<String, Tone>? =
+    when (this) {
+        SyncState.SYNCED -> null
+        SyncState.PENDING -> stringResource(R.string.expenses_sync_pending) to Tone.WARNING
+        SyncState.CONFLICT -> stringResource(R.string.expenses_sync_conflict) to Tone.CRITICAL
+    }
 
 @ThemePreviews
 @Preview(name = "large font", fontScale = 2.0f, showBackground = true)

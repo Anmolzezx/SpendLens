@@ -12,11 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.spendlens.core.designsystem.preview.ThemePreviews
-import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Spacing
+import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Tone
 import com.spendlens.core.designsystem.theme.color
 

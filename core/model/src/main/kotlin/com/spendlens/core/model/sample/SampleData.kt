@@ -23,7 +23,6 @@ import java.time.YearMonth
 private val AUGUST_2026: YearMonth = YearMonth.of(2026, 8)
 
 object SampleCategories {
-
     val groceries = Category(id = "cat-groceries", name = "Groceries", colorIndex = 0, iconKey = "cart")
     val dining = Category(id = "cat-dining", name = "Dining Out", colorIndex = 1, iconKey = "restaurant")
     val transport = Category(id = "cat-transport", name = "Transport", colorIndex = 2, iconKey = "car")
@@ -37,7 +36,6 @@ object SampleCategories {
 }
 
 object SampleExpenses {
-
     /**
      * Visible expenses, tombstones excluded. Roughly newest-first, but **not** guaranteed sorted —
      * consumers sort explicitly, the same way the Room query will `ORDER BY occurred_at DESC`.
@@ -223,15 +221,14 @@ object SampleExpenses {
 }
 
 object SampleBudgets {
-
     /** Limits chosen so the six categories land two UNDER, two NEAR, and two OVER for August 2026. */
     val all: List<Budget> = listOf(
-        budget(SampleCategories.groceries, limitMinor = 30_000),   // 27,821 spent -> NEAR
-        budget(SampleCategories.dining, limitMinor = 15_000),      //  2,755 spent -> UNDER
-        budget(SampleCategories.transport, limitMinor = 100_000),  // 197,750 spent -> OVER
-        budget(SampleCategories.utilities, limitMinor = 25_000),   // 23,820 spent -> NEAR
-        budget(SampleCategories.shopping, limitMinor = 150_000),   // 287,189 spent -> OVER
-        budget(SampleCategories.health, limitMinor = 40_000),      // 22,699 spent -> UNDER
+        budget(SampleCategories.groceries, limitMinor = 30_000), // 27,821 spent -> NEAR
+        budget(SampleCategories.dining, limitMinor = 15_000), //  2,755 spent -> UNDER
+        budget(SampleCategories.transport, limitMinor = 100_000), // 197,750 spent -> OVER
+        budget(SampleCategories.utilities, limitMinor = 25_000), // 23,820 spent -> NEAR
+        budget(SampleCategories.shopping, limitMinor = 150_000), // 287,189 spent -> OVER
+        budget(SampleCategories.health, limitMinor = 40_000), // 22,699 spent -> UNDER
     )
 
     val byCategoryId: Map<String, Budget> = all.associateBy(Budget::categoryId)
@@ -264,7 +261,10 @@ private fun expense(
     isDeleted = isDeleted,
 )
 
-private fun budget(category: Category, limitMinor: Long) = Budget(
+private fun budget(
+    category: Category,
+    limitMinor: Long,
+) = Budget(
     categoryId = category.id,
     limitMinor = limitMinor,
     currency = SAMPLE_CURRENCY,

@@ -11,7 +11,6 @@ import org.junit.Test
  * it", which is a notification the user did not earn.
  */
 class BudgetStatusTest {
-
     @Test
     fun `well below the limit is under`() {
         assertEquals(BudgetStatus.UNDER, BudgetStatus.of(spentMinor = 0, limitMinor = 1_000))

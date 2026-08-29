@@ -15,7 +15,6 @@ import java.util.Locale
  * developer machine and fail on a CI runner configured differently.
  */
 class MoneyTest {
-
     @Test
     fun `formats USD as major units with two decimal places`() {
         assertEquals("$12.34", 1_234L.formatAsMoney("USD", Locale.US))
@@ -83,17 +82,18 @@ class MoneyTest {
         assertEquals(0L, totalMinor(emptyList()))
     }
 
-    private fun sampleExpense(amountMinor: Long) = Expense(
-        id = "id-$amountMinor",
-        merchant = "Merchant",
-        amountMinor = amountMinor,
-        currency = "USD",
-        occurredAt = java.time.Instant.EPOCH,
-        categoryId = "cat",
-        note = null,
-        receiptImagePath = null,
-        syncState = SyncState.SYNCED,
-        updatedAt = java.time.Instant.EPOCH,
-        isDeleted = false,
-    )
+    private fun sampleExpense(amountMinor: Long) =
+        Expense(
+            id = "id-$amountMinor",
+            merchant = "Merchant",
+            amountMinor = amountMinor,
+            currency = "USD",
+            occurredAt = java.time.Instant.EPOCH,
+            categoryId = "cat",
+            note = null,
+            receiptImagePath = null,
+            syncState = SyncState.SYNCED,
+            updatedAt = java.time.Instant.EPOCH,
+            isDeleted = false,
+        )
 }

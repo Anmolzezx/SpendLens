@@ -21,7 +21,9 @@ data object ExpensesGraph
 data object ExpenseListRoute
 
 @Serializable
-data class ExpenseDetailRoute(val expenseId: String)
+data class ExpenseDetailRoute(
+    val expenseId: String,
+)
 
 fun NavController.navigateToExpenses(navOptions: NavOptions? = null) =
     navigate(route = ExpensesGraph, navOptions = navOptions)

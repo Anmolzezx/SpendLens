@@ -16,28 +16,27 @@ import java.util.Locale
  * `core:testing`, and nothing in the UI changes.
  */
 internal object FakeExpenseList {
-
     fun success(
         zoneId: ZoneId,
         locale: Locale,
         uncategorisedLabel: String,
-    ): ExpenseListUiState.Success = ExpenseListUiState.Success(
-        expenses = SampleExpenses.all
-            // Newest first. Sorting here rather than trusting the fixture's declaration order
-            // mirrors what the repository's `ORDER BY occurred_at DESC` will do.
-            .sortedByDescending { it.occurredAt }
-            .map { expense ->
-                expense.toUiModel(
-                    category = SampleCategories.byId[expense.categoryId],
-                    uncategorisedLabel = uncategorisedLabel,
-                    zoneId = zoneId,
-                    locale = locale,
-                )
-            }
-            .toImmutableList(),
-        monthTotal = totalMinor(SampleExpenses.all).formatAsMoney(SAMPLE_CURRENCY, locale),
-        pendingCount = SampleExpenses.all.count { it.syncState != SyncState.SYNCED },
-    )
+    ): ExpenseListUiState.Success =
+        ExpenseListUiState.Success(
+            expenses = SampleExpenses.all
+                // Newest first. Sorting here rather than trusting the fixture's declaration order
+                // mirrors what the repository's `ORDER BY occurred_at DESC` will do.
+                .sortedByDescending { it.occurredAt }
+                .map { expense ->
+                    expense.toUiModel(
+                        category = SampleCategories.byId[expense.categoryId],
+                        uncategorisedLabel = uncategorisedLabel,
+                        zoneId = zoneId,
+                        locale = locale,
+                    )
+                }.toImmutableList(),
+            monthTotal = totalMinor(SampleExpenses.all).formatAsMoney(SAMPLE_CURRENCY, locale),
+            pendingCount = SampleExpenses.all.count { it.syncState != SyncState.SYNCED },
+        )
 
     private const val SAMPLE_CURRENCY = "USD"
 }
@@ -49,7 +48,6 @@ internal object FakeExpenseList {
  * Paparazzi run into a test that passes locally and fails in CI.
  */
 internal object ExpenseListPreviewData {
-
     val success: ExpenseListUiState.Success = FakeExpenseList.success(
         zoneId = ZoneId.of("UTC"),
         locale = Locale.US,

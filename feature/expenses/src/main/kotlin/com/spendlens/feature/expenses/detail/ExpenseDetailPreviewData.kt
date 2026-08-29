@@ -15,24 +15,25 @@ internal fun Expense.toDetailUiModel(
     uncategorisedLabel: String,
     zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault(),
-): ExpenseDetailUiModel = ExpenseDetailUiModel(
-    id = id,
-    merchant = merchant,
-    formattedAmount = amountMinor.formatAsMoney(currency, locale),
-    formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
-        .withLocale(locale)
-        .withZone(zoneId)
-        .format(occurredAt),
-    categoryName = category?.name ?: uncategorisedLabel,
-    categoryColorIndex = category?.colorIndex ?: 0,
-    note = note,
-    receiptImagePath = receiptImagePath,
-    syncState = syncState,
-)
+): ExpenseDetailUiModel =
+    ExpenseDetailUiModel(
+        id = id,
+        merchant = merchant,
+        formattedAmount = amountMinor.formatAsMoney(currency, locale),
+        formattedDate = DateTimeFormatter
+            .ofLocalizedDate(FormatStyle.LONG)
+            .withLocale(locale)
+            .withZone(zoneId)
+            .format(occurredAt),
+        categoryName = category?.name ?: uncategorisedLabel,
+        categoryColorIndex = category?.colorIndex ?: 0,
+        note = note,
+        receiptImagePath = receiptImagePath,
+        syncState = syncState,
+    )
 
 /** Stands in for the repository until phase 1's Room work lands. */
 internal object FakeExpenseDetail {
-
     fun stateFor(
         expenseId: String,
         uncategorisedLabel: String,
@@ -54,7 +55,6 @@ internal object FakeExpenseDetail {
 
 /** Timezone and locale pinned, so previews and screenshot tests render identically anywhere. */
 internal object ExpenseDetailPreviewData {
-
     private val zone: ZoneId = ZoneId.of("UTC")
     private val locale: Locale = Locale.US
 
@@ -64,10 +64,11 @@ internal object ExpenseDetailPreviewData {
     /** No note, no receipt — the branches that must not leave empty gaps. */
     val minimal: ExpenseDetailUiState = state(SampleExpenses.withoutReceipt.id)
 
-    private fun state(id: String) = FakeExpenseDetail.stateFor(
-        expenseId = id,
-        uncategorisedLabel = "Uncategorised",
-        zoneId = zone,
-        locale = locale,
-    )
+    private fun state(id: String) =
+        FakeExpenseDetail.stateFor(
+            expenseId = id,
+            uncategorisedLabel = "Uncategorised",
+            zoneId = zone,
+            locale = locale,
+        )
 }

@@ -11,7 +11,6 @@ import org.junit.Test
  * every screenshot baseline at once.
  */
 class SampleDataTest {
-
     @Test
     fun `visible expenses contain no tombstones`() {
         assertTrue(SampleExpenses.all.none { it.isDeleted })

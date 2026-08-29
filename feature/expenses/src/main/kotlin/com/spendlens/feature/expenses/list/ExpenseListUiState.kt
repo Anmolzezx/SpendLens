@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.ImmutableList
  * there is no way to represent the nonsense state of "loading, with an error, and also data".
  */
 sealed interface ExpenseListUiState {
-
     data object Loading : ExpenseListUiState
 
     /**
@@ -15,7 +14,9 @@ sealed interface ExpenseListUiState {
      *   nothing". They are different screens with different copy and different actions, and
      *   collapsing them into one empty state is a common way to strand a user.
      */
-    data class Empty(val hasActiveFilters: Boolean) : ExpenseListUiState
+    data class Empty(
+        val hasActiveFilters: Boolean,
+    ) : ExpenseListUiState
 
     data class Success(
         val expenses: ImmutableList<ExpenseUiModel>,
@@ -23,5 +24,7 @@ sealed interface ExpenseListUiState {
         val pendingCount: Int,
     ) : ExpenseListUiState
 
-    data class Error(val message: String) : ExpenseListUiState
+    data class Error(
+        val message: String,
+    ) : ExpenseListUiState
 }

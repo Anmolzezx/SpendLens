@@ -30,8 +30,8 @@ import com.spendlens.core.designsystem.component.AmountText
 import com.spendlens.core.designsystem.component.EmptyState
 import com.spendlens.core.designsystem.component.StatusBadge
 import com.spendlens.core.designsystem.preview.ThemePreviews
-import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Spacing
+import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Tone
 import com.spendlens.feature.expenses.R
 

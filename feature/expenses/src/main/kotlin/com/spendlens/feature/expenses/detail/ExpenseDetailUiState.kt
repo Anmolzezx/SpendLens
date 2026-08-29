@@ -11,12 +11,13 @@ import com.spendlens.core.model.SyncState
  * failure would show "something went wrong" for something that went entirely right.
  */
 sealed interface ExpenseDetailUiState {
-
     data object Loading : ExpenseDetailUiState
 
     data object NotFound : ExpenseDetailUiState
 
-    data class Success(val expense: ExpenseDetailUiModel) : ExpenseDetailUiState
+    data class Success(
+        val expense: ExpenseDetailUiModel,
+    ) : ExpenseDetailUiState
 }
 
 @Immutable

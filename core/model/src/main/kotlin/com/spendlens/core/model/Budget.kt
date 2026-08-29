@@ -23,11 +23,15 @@ enum class BudgetStatus {
     companion object {
         const val NEAR_THRESHOLD: Float = 0.8f
 
-        fun of(spentMinor: Long, limitMinor: Long): BudgetStatus = when {
-            limitMinor <= 0L -> UNDER
-            spentMinor > limitMinor -> OVER
-            spentMinor.toFloat() / limitMinor >= NEAR_THRESHOLD -> NEAR
-            else -> UNDER
-        }
+        fun of(
+            spentMinor: Long,
+            limitMinor: Long,
+        ): BudgetStatus =
+            when {
+                limitMinor <= 0L -> UNDER
+                spentMinor > limitMinor -> OVER
+                spentMinor.toFloat() / limitMinor >= NEAR_THRESHOLD -> NEAR
+                else -> UNDER
+            }
     }
 }

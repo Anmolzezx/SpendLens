@@ -41,18 +41,23 @@ internal fun Expense.toUiModel(
     uncategorisedLabel: String,
     zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault(),
-): ExpenseUiModel = ExpenseUiModel(
-    id = id,
-    merchant = merchant,
-    formattedAmount = amountMinor.formatAsMoney(currency, locale),
-    formattedDate = dateFormatter(locale, zoneId).format(occurredAt),
-    categoryName = category?.name ?: uncategorisedLabel,
-    categoryColorIndex = category?.colorIndex ?: 0,
-    hasReceipt = receiptImagePath != null,
-    syncState = syncState,
-)
+): ExpenseUiModel =
+    ExpenseUiModel(
+        id = id,
+        merchant = merchant,
+        formattedAmount = amountMinor.formatAsMoney(currency, locale),
+        formattedDate = dateFormatter(locale, zoneId).format(occurredAt),
+        categoryName = category?.name ?: uncategorisedLabel,
+        categoryColorIndex = category?.colorIndex ?: 0,
+        hasReceipt = receiptImagePath != null,
+        syncState = syncState,
+    )
 
-private fun dateFormatter(locale: Locale, zoneId: ZoneId): DateTimeFormatter =
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+private fun dateFormatter(
+    locale: Locale,
+    zoneId: ZoneId,
+): DateTimeFormatter =
+    DateTimeFormatter
+        .ofLocalizedDate(FormatStyle.MEDIUM)
         .withLocale(locale)
         .withZone(zoneId)

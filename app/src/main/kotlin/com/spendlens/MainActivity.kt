@@ -16,7 +16,6 @@ import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.navigation.SpendLensNavHost
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

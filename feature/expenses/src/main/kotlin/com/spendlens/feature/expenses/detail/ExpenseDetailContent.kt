@@ -32,8 +32,8 @@ import com.spendlens.core.designsystem.component.CategoryChip
 import com.spendlens.core.designsystem.component.EmptyState
 import com.spendlens.core.designsystem.component.StatusBadge
 import com.spendlens.core.designsystem.preview.ThemePreviews
-import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Spacing
+import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Tone
 import com.spendlens.core.model.SyncState
 import com.spendlens.feature.expenses.R
@@ -206,11 +206,12 @@ private fun DetailRow(
 }
 
 @Composable
-private fun SyncState.badge(): Pair<String, Tone>? = when (this) {
-    SyncState.SYNCED -> null
-    SyncState.PENDING -> stringResource(R.string.expenses_sync_pending) to Tone.WARNING
-    SyncState.CONFLICT -> stringResource(R.string.expenses_sync_conflict) to Tone.CRITICAL
-}
+private fun SyncState.badge(): Pair<String, Tone>? =
+    when (this) {
+        SyncState.SYNCED -> null
+        SyncState.PENDING -> stringResource(R.string.expenses_sync_pending) to Tone.WARNING
+        SyncState.CONFLICT -> stringResource(R.string.expenses_sync_conflict) to Tone.CRITICAL
+    }
 
 private const val RECEIPT_ASPECT_RATIO = 4f / 3f
 

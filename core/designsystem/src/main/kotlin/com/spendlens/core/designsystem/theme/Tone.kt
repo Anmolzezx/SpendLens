@@ -22,9 +22,10 @@ enum class Tone {
 
 @Composable
 @ReadOnlyComposable
-fun Tone.color(): Color = when (this) {
-    Tone.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
-    Tone.POSITIVE -> MaterialTheme.semantic.budgetUnder
-    Tone.WARNING -> MaterialTheme.semantic.budgetNear
-    Tone.CRITICAL -> MaterialTheme.semantic.budgetOver
-}
+fun Tone.color(): Color =
+    when (this) {
+        Tone.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
+        Tone.POSITIVE -> MaterialTheme.semantic.budgetUnder
+        Tone.WARNING -> MaterialTheme.semantic.budgetNear
+        Tone.CRITICAL -> MaterialTheme.semantic.budgetOver
+    }
