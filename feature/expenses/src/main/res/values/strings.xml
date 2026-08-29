@@ -24,4 +24,16 @@
     <string name="expenses_empty_filtered_description">Try widening the date range or clearing a category.</string>
 
     <string name="expenses_error_title">Couldn\'t load expenses</string>
+
+    <string name="expense_detail_title">Expense</string>
+    <string name="expense_detail_back">Back</string>
+    <string name="expense_detail_date">Date</string>
+    <string name="expense_detail_category">Category</string>
+    <string name="expense_detail_note">Note</string>
+    <string name="expense_detail_receipt">Receipt</string>
+    <string name="expense_detail_no_receipt">No receipt attached</string>
+    <string name="expense_detail_edit">Edit</string>
+    <string name="expense_detail_delete">Delete</string>
+    <string name="expense_detail_not_found_title">Expense not found</string>
+    <string name="expense_detail_not_found_description">It may have been deleted on another device.</string>
 </resources>
