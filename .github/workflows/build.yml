@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+# A new push to the same branch cancels the run already in flight — no point paying for CI on a
+# commit that has already been superseded.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # Must match toolchainVersion in gradle/gradle-daemon-jvm.properties. Gradle would otherwise
+      # auto-provision a JDK over the network on every run, which is slow and can fail offline.
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew test
+
+      # Separate step from the tests so a red build says which one broke at a glance.
+      - name: Assemble debug
+        run: ./gradlew assembleDebug
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/'
+          retention-days: 7
