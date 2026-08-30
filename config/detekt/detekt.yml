@@ -36,3 +36,7 @@ style:
   ForbiddenComment:
     # TODOs here are deliberate and point at named phases of the roadmap.
     active: false
+  ReturnCount:
+    # Guard clauses don't count. A validator that rejects each bad input at the point it detects it
+    # reads better than one that nests, and the rule's default of 2 is aimed at long procedures.
+    excludeGuardClauses: true
