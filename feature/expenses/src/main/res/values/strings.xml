@@ -36,4 +36,21 @@
     <string name="expense_detail_delete">Delete</string>
     <string name="expense_detail_not_found_title">Expense not found</string>
     <string name="expense_detail_not_found_description">It may have been deleted on another device.</string>
+
+    <string name="expense_edit_title_new">New expense</string>
+    <string name="expense_edit_title_edit">Edit expense</string>
+    <string name="expense_edit_save">Save</string>
+    <string name="expense_edit_cancel">Cancel</string>
+    <string name="expense_edit_merchant">Merchant</string>
+    <string name="expense_edit_amount">Amount</string>
+    <string name="expense_edit_category">Category</string>
+    <string name="expense_edit_date">Date</string>
+    <string name="expense_edit_date_confirm">Set date</string>
+    <string name="expense_edit_note">Note (optional)</string>
+
+    <string name="expense_edit_error_required">Required</string>
+    <string name="expense_edit_error_not_a_number">Enter a number, e.g. 12.34</string>
+    <string name="expense_edit_error_too_precise">Too many decimal places for this currency</string>
+    <string name="expense_edit_error_negative">Amount can\'t be negative</string>
+    <string name="expense_edit_error_too_large">Amount is too large</string>
 </resources>
