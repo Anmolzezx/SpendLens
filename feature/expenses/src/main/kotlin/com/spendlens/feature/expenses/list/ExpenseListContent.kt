@@ -48,6 +48,7 @@ internal fun ExpenseListContent(
     uiState: ExpenseListUiState,
     onExpenseClick: (String) -> Unit,
     onAddExpenseClick: () -> Unit,
+    onScanReceiptClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -85,7 +86,9 @@ internal fun ExpenseListContent(
                 // Filtered-empty offers no action: the user has data, they just narrowed past it.
                 actionLabel = stringResource(R.string.expenses_empty_action)
                     .takeUnless { uiState.hasActiveFilters },
-                onAction = onAddExpenseClick.takeUnless { uiState.hasActiveFilters },
+                // The empty state leads with the camera — it is the app's whole point, and a
+                // first-run user has nothing to type yet. The FAB stays on manual entry.
+                onAction = onScanReceiptClick.takeUnless { uiState.hasActiveFilters },
             )
 
             is ExpenseListUiState.Error -> EmptyState(
@@ -186,6 +189,7 @@ private fun ExpenseListSuccessPreview() {
                 uiState = ExpenseListPreviewData.success,
                 onExpenseClick = {},
                 onAddExpenseClick = {},
+                onScanReceiptClick = {},
             )
         }
     }
@@ -200,6 +204,7 @@ private fun ExpenseListEmptyPreview() {
                 uiState = ExpenseListUiState.Empty(hasActiveFilters = false),
                 onExpenseClick = {},
                 onAddExpenseClick = {},
+                onScanReceiptClick = {},
             )
         }
     }
@@ -214,6 +219,7 @@ private fun ExpenseListFilteredEmptyPreview() {
                 uiState = ExpenseListUiState.Empty(hasActiveFilters = true),
                 onExpenseClick = {},
                 onAddExpenseClick = {},
+                onScanReceiptClick = {},
             )
         }
     }
@@ -228,6 +234,7 @@ private fun ExpenseListLoadingPreview() {
                 uiState = ExpenseListUiState.Loading,
                 onExpenseClick = {},
                 onAddExpenseClick = {},
+                onScanReceiptClick = {},
             )
         }
     }
@@ -242,6 +249,7 @@ private fun ExpenseListErrorPreview() {
                 uiState = ExpenseListUiState.Error("No connection, and nothing cached yet."),
                 onExpenseClick = {},
                 onAddExpenseClick = {},
+                onScanReceiptClick = {},
             )
         }
     }

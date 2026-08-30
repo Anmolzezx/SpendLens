@@ -25,8 +25,6 @@ fun SpendLensNavHost(
         modifier = modifier,
     ) {
         expensesGraph(
-            // TODO(phase 1): route to the edit screen once feature:expenses has one.
-            onNavigateToEdit = {},
             // TODO(phase 2): navController.navigateToCapture()
             onNavigateToCapture = {},
             navController = navController,

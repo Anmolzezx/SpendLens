@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
 import com.spendlens.feature.expenses.detail.ExpenseDetailScreen
+import com.spendlens.feature.expenses.edit.ExpenseEditScreen
 import com.spendlens.feature.expenses.list.ExpenseListScreen
 import kotlinx.serialization.Serializable
 
@@ -25,6 +26,12 @@ data class ExpenseDetailRoute(
     val expenseId: String,
 )
 
+/** [expenseId] is null when creating a new expense — the same screen serves both. */
+@Serializable
+data class ExpenseEditRoute(
+    val expenseId: String? = null,
+)
+
 fun NavController.navigateToExpenses(navOptions: NavOptions? = null) =
     navigate(route = ExpensesGraph, navOptions = navOptions)
 
@@ -37,7 +44,6 @@ fun NavController.navigateToExpenses(navOptions: NavOptions? = null) =
  * decides what that means. Navigation *within* the graph stays here, where it belongs.
  */
 fun NavGraphBuilder.expensesGraph(
-    onNavigateToEdit: (String?) -> Unit,
     onNavigateToCapture: () -> Unit,
     navController: NavController,
 ) {
@@ -45,7 +51,9 @@ fun NavGraphBuilder.expensesGraph(
         composable<ExpenseListRoute> {
             ExpenseListScreen(
                 onExpenseClick = { id -> navController.navigate(ExpenseDetailRoute(id)) },
-                onAddExpenseClick = onNavigateToCapture,
+                onAddExpenseClick = { navController.navigate(ExpenseEditRoute()) },
+                // The one genuinely cross-feature edge, and the only one handed upward.
+                onScanReceiptClick = onNavigateToCapture,
             )
         }
         composable<ExpenseDetailRoute> { backStackEntry ->
@@ -54,8 +62,18 @@ fun NavGraphBuilder.expensesGraph(
             ExpenseDetailScreen(
                 expenseId = route.expenseId,
                 onBack = { navController.popBackStack() },
-                onEditClick = onNavigateToEdit,
+                onEditClick = { id -> navController.navigate(ExpenseEditRoute(id)) },
                 onDeleteClick = { navController.popBackStack() },
+            )
+        }
+        composable<ExpenseEditRoute> { backStackEntry ->
+            val route: ExpenseEditRoute = backStackEntry.toRoute()
+            ExpenseEditScreen(
+                expenseId = route.expenseId,
+                // Both land back where the user came from. Once saving is real, the list will be
+                // showing the new row already, because it observes the database rather than a result.
+                onSaved = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() },
             )
         }
     }

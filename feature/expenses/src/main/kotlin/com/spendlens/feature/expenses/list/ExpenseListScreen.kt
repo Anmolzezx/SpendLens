@@ -24,6 +24,7 @@ import java.time.ZoneId
 fun ExpenseListScreen(
     onExpenseClick: (String) -> Unit,
     onAddExpenseClick: () -> Unit,
+    onScanReceiptClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uncategorised = stringResource(R.string.expenses_uncategorised)
@@ -43,6 +44,7 @@ fun ExpenseListScreen(
         uiState = uiState,
         onExpenseClick = onExpenseClick,
         onAddExpenseClick = onAddExpenseClick,
+        onScanReceiptClick = onScanReceiptClick,
         modifier = modifier,
     )
 }
