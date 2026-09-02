@@ -7,13 +7,9 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
 import com.spendlens.core.designsystem.theme.SpendLensTheme
-import com.spendlens.navigation.SpendLensNavHost
+import com.spendlens.ui.SpendLensApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,14 +41,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-private fun SpendLensApp() {
-    SpendLensNavHost(
-        navController = rememberNavController(),
-        modifier = Modifier.fillMaxSize(),
-    )
 }
 
 /** Matches the scrims the framework draws behind 3-button navigation. */

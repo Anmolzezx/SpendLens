@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.spendlens.feature.expenses.navigation.ExpensesGraph
 import com.spendlens.feature.expenses.navigation.expensesGraph
+import com.spendlens.feature.insights.navigation.insightsGraph
 
 /**
  * The one place that knows about every feature.
@@ -29,5 +30,6 @@ fun SpendLensNavHost(
             onNavigateToCapture = {},
             navController = navController,
         )
+        insightsGraph()
     }
 }
