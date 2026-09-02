@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="insights_title">Insights</string>
+    <string name="insights_total_this_month">Total this month</string>
+    <string name="insights_by_category">By category</string>
+    <string name="insights_no_budget">No budget set</string>
+    <string name="insights_of_limit">of %1$s</string>
+
+    <string name="insights_empty_title">Nothing to chart yet</string>
+    <string name="insights_empty_description">Add an expense and your monthly breakdown appears here.</string>
+
+    <!-- Screen-reader sentences. Colour and bar length carry no meaning to TalkBack. -->
+    <string name="insights_state_with_budget">%1$s, %2$s of %3$s spent, %4$s</string>
+    <string name="insights_state_without_budget">%1$s, %2$s spent, no budget set</string>
+    <string name="insights_status_under">under budget</string>
+    <string name="insights_status_near">nearing budget</string>
+    <string name="insights_status_over">over budget</string>
+</resources>
