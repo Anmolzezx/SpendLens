@@ -1,5 +1,6 @@
 plugins {
     id("spendlens.android.application")
+    id("spendlens.android.hilt")
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -27,6 +28,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.common)
     implementation(projects.core.designsystem)
     implementation(projects.core.model)
     implementation(projects.feature.expenses)
