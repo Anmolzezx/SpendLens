@@ -22,6 +22,8 @@ dependencies {
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.detekt.gradlePlugin)
     compileOnly(libs.ktlint.gradlePlugin)
+    compileOnly(libs.hilt.gradlePlugin)
+    compileOnly(libs.ksp.gradlePlugin)
 }
 
 gradlePlugin {
@@ -45,6 +47,10 @@ gradlePlugin {
         register("androidFeature") {
             id = "spendlens.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
+        }
+        register("androidHilt") {
+            id = "spendlens.android.hilt"
+            implementationClass = "AndroidHiltConventionPlugin"
         }
         register("quality") {
             id = "spendlens.quality"
