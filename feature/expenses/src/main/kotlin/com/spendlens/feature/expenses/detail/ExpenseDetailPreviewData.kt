@@ -10,50 +10,32 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
+/**
+ * [category] may be null, and [ExpenseDetailUiModel.categoryName] stays null when it is. Resolving
+ * that to "Uncategorised" needs a string resource, and a `Context` has no business in a mapper the
+ * ViewModel calls — the composable supplies the fallback.
+ */
 internal fun Expense.toDetailUiModel(
     category: Category?,
-    uncategorisedLabel: String,
     zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault(),
-): ExpenseDetailUiModel =
-    ExpenseDetailUiModel(
-        id = id,
-        merchant = merchant,
-        formattedAmount = amountMinor.formatAsMoney(currency, locale),
-        formattedDate = DateTimeFormatter
-            .ofLocalizedDate(FormatStyle.LONG)
-            .withLocale(locale)
-            .withZone(zoneId)
-            .format(occurredAt),
-        categoryName = category?.name ?: uncategorisedLabel,
-        categoryColorIndex = category?.colorIndex ?: 0,
-        note = note,
-        receiptImagePath = receiptImagePath,
-        syncState = syncState,
-    )
+) = ExpenseDetailUiModel(
+    id = id,
+    merchant = merchant,
+    formattedAmount = amountMinor.formatAsMoney(currency, locale),
+    formattedDate = DateTimeFormatter
+        .ofLocalizedDate(FormatStyle.LONG)
+        .withLocale(locale)
+        .withZone(zoneId)
+        .format(occurredAt),
+    categoryName = category?.name,
+    categoryColorIndex = category?.colorIndex ?: 0,
+    note = note,
+    receiptImagePath = receiptImagePath,
+    syncState = syncState,
+)
 
-/** Stands in for the repository until phase 1's Room work lands. */
-internal object FakeExpenseDetail {
-    fun stateFor(
-        expenseId: String,
-        uncategorisedLabel: String,
-        zoneId: ZoneId,
-        locale: Locale,
-    ): ExpenseDetailUiState {
-        val expense = SampleExpenses.all.firstOrNull { it.id == expenseId }
-            ?: return ExpenseDetailUiState.NotFound
-        return ExpenseDetailUiState.Success(
-            expense.toDetailUiModel(
-                category = SampleCategories.byId[expense.categoryId],
-                uncategorisedLabel = uncategorisedLabel,
-                zoneId = zoneId,
-                locale = locale,
-            ),
-        )
-    }
-}
-
-/** Timezone and locale pinned, so previews and screenshot tests render identically anywhere. */
+/** Timezone and locale pinned, so previews and screenshot baselines render identically anywhere. */
 internal object ExpenseDetailPreviewData {
     private val zone: ZoneId = ZoneId.of("UTC")
     private val locale: Locale = Locale.US
@@ -64,11 +46,14 @@ internal object ExpenseDetailPreviewData {
     /** No note, no receipt — the branches that must not leave empty gaps. */
     val minimal: ExpenseDetailUiState = state(SampleExpenses.withoutReceipt.id)
 
-    private fun state(id: String) =
-        FakeExpenseDetail.stateFor(
-            expenseId = id,
-            uncategorisedLabel = "Uncategorised",
-            zoneId = zone,
-            locale = locale,
+    private fun state(id: String): ExpenseDetailUiState {
+        val expense = SampleExpenses.all.first { it.id == id }
+        return ExpenseDetailUiState.Success(
+            expense.toDetailUiModel(
+                category = SampleCategories.byId[expense.categoryId],
+                zoneId = zone,
+                locale = locale,
+            ),
         )
+    }
 }

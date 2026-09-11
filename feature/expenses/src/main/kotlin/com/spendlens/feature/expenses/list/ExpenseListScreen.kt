@@ -1,24 +1,16 @@
 package com.spendlens.feature.expenses.list
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
-import com.spendlens.feature.expenses.R
-import java.time.ZoneId
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
- * The stateful half of the list screen, and the only part of it `:app` can see.
+ * Stateful half of the list screen.
  *
- * Today it hands the stateless screen fake data. When the data layer lands, the body becomes:
- *
- * ```
- * val viewModel: ExpenseListViewModel = hiltViewModel()
- * val uiState by viewModel.uiState.collectAsStateWithLifecycle()
- * ```
- *
- * and nothing below this function changes — that is the whole point of building the UI first.
+ * This is the seam the UI-first phase was built around: the body changed from constructing fake
+ * state to collecting the ViewModel's, and [ExpenseListContent] below it did not change at all.
  */
 @Composable
 fun ExpenseListScreen(
@@ -26,19 +18,11 @@ fun ExpenseListScreen(
     onAddExpenseClick: () -> Unit,
     onScanReceiptClick: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: ExpenseListViewModel = hiltViewModel(),
 ) {
-    val uncategorised = stringResource(R.string.expenses_uncategorised)
-    val locale = LocalConfiguration.current.locales[0]
-
-    // remember: formatting 18 rows on every recomposition would be wasted work, and this stands in
-    // for a Flow that will only re-emit when the data actually changes.
-    val uiState = remember(locale, uncategorised) {
-        FakeExpenseList.success(
-            zoneId = ZoneId.systemDefault(),
-            locale = locale,
-            uncategorisedLabel = uncategorised,
-        )
-    }
+    // collectAsStateWithLifecycle, not collectAsState: the latter keeps collecting — and keeps the
+    // database query alive — while the app is in the background.
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     ExpenseListContent(
         uiState = uiState,

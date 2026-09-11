@@ -5,7 +5,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
-import androidx.navigation.toRoute
 import com.spendlens.feature.expenses.detail.ExpenseDetailScreen
 import com.spendlens.feature.expenses.edit.ExpenseEditScreen
 import com.spendlens.feature.expenses.list.ExpenseListScreen
@@ -56,20 +55,16 @@ fun NavGraphBuilder.expensesGraph(
                 onScanReceiptClick = onNavigateToCapture,
             )
         }
-        composable<ExpenseDetailRoute> { backStackEntry ->
-            // Typed extraction — no string keys, no null handling, no manual casting.
-            val route: ExpenseDetailRoute = backStackEntry.toRoute()
+        composable<ExpenseDetailRoute> {
+            // The route arguments are read by the ViewModel from its SavedStateHandle now, so the
+            // graph no longer threads them through the composable signature.
             ExpenseDetailScreen(
-                expenseId = route.expenseId,
                 onBack = { navController.popBackStack() },
                 onEditClick = { id -> navController.navigate(ExpenseEditRoute(id)) },
-                onDeleteClick = { navController.popBackStack() },
             )
         }
-        composable<ExpenseEditRoute> { backStackEntry ->
-            val route: ExpenseEditRoute = backStackEntry.toRoute()
+        composable<ExpenseEditRoute> {
             ExpenseEditScreen(
-                expenseId = route.expenseId,
                 // Both land back where the user came from. Once saving is real, the list will be
                 // showing the new row already, because it observes the database rather than a result.
                 onSaved = { navController.popBackStack() },

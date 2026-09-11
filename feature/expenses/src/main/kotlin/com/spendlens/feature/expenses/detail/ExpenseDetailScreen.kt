@@ -1,44 +1,36 @@
 package com.spendlens.feature.expenses.detail
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
-import com.spendlens.feature.expenses.R
-import java.time.ZoneId
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Stateful half of the detail screen.
  *
- * [expenseId] arrives as a parameter today; once there is a ViewModel it comes from
- * `savedStateHandle.toRoute<ExpenseDetailRoute>()` instead, and this signature loses it.
+ * The expense id is no longer a parameter: the ViewModel reads it from its `SavedStateHandle` via
+ * `toRoute<ExpenseDetailRoute>()`, which is both typed and process-death-safe.
  */
 @Composable
 fun ExpenseDetailScreen(
-    expenseId: String,
     onBack: () -> Unit,
     onEditClick: (String) -> Unit,
-    onDeleteClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: ExpenseDetailViewModel = hiltViewModel(),
 ) {
-    val uncategorised = stringResource(R.string.expenses_uncategorised)
-    val locale = LocalConfiguration.current.locales[0]
-
-    val uiState = remember(expenseId, locale, uncategorised) {
-        FakeExpenseDetail.stateFor(
-            expenseId = expenseId,
-            uncategorisedLabel = uncategorised,
-            zoneId = ZoneId.systemDefault(),
-            locale = locale,
-        )
-    }
+    // collectAsStateWithLifecycle, not collectAsState: the latter keeps collecting — and keeps the
+    // database query alive — while the app is in the background.
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     ExpenseDetailContent(
         uiState = uiState,
         onBack = onBack,
         onEditClick = onEditClick,
-        onDeleteClick = onDeleteClick,
+        onDeleteClick = {
+            viewModel.delete()
+            onBack()
+        },
         modifier = modifier,
     )
 }

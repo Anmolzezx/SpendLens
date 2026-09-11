@@ -131,7 +131,10 @@ private fun ExpenseDetail(
         }
 
         DetailRow(label = stringResource(R.string.expense_detail_category)) {
-            CategoryChip(label = expense.categoryName, colorIndex = expense.categoryColorIndex)
+            CategoryChip(
+                label = expense.categoryName ?: stringResource(R.string.expenses_uncategorised),
+                colorIndex = expense.categoryColorIndex,
+            )
         }
 
         if (expense.note != null) {

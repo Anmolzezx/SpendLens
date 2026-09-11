@@ -26,7 +26,7 @@ data class ExpenseDetailUiModel(
     val merchant: String,
     val formattedAmount: String,
     val formattedDate: String,
-    val categoryName: String,
+    val categoryName: String?,
     val categoryColorIndex: Int,
     val note: String?,
     val receiptImagePath: String?,

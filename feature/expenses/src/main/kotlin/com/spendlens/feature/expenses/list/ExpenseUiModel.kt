@@ -24,7 +24,8 @@ data class ExpenseUiModel(
     val merchant: String,
     val formattedAmount: String,
     val formattedDate: String,
-    val categoryName: String,
+    /** Null when the category is unknown; the composable supplies the fallback label. */
+    val categoryName: String?,
     val categoryColorIndex: Int,
     val hasReceipt: Boolean,
     val syncState: SyncState,
@@ -33,12 +34,9 @@ data class ExpenseUiModel(
 /**
  * @param zoneId and @param locale are explicit so previews and screenshot tests can pin them.
  *   Reading the ambient defaults would make the rendered date depend on the machine running the test.
- * @param uncategorisedLabel passed in rather than read from resources, which keeps this a pure
- *   function with no `Context`.
  */
 internal fun Expense.toUiModel(
     category: Category?,
-    uncategorisedLabel: String,
     zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault(),
 ): ExpenseUiModel =
@@ -47,7 +45,7 @@ internal fun Expense.toUiModel(
         merchant = merchant,
         formattedAmount = amountMinor.formatAsMoney(currency, locale),
         formattedDate = dateFormatter(locale, zoneId).format(occurredAt),
-        categoryName = category?.name ?: uncategorisedLabel,
+        categoryName = category?.name,
         categoryColorIndex = category?.colorIndex ?: 0,
         hasReceipt = receiptImagePath != null,
         syncState = syncState,

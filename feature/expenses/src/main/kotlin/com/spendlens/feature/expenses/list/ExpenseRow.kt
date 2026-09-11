@@ -60,7 +60,7 @@ internal fun ExpenseRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CategoryChip(
-                    label = expense.categoryName,
+                    label = expense.categoryName ?: stringResource(R.string.expenses_uncategorised),
                     colorIndex = expense.categoryColorIndex,
                 )
                 Text(
