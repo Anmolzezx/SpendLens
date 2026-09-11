@@ -27,3 +27,5 @@ captures/
 .cxx/
 
 PROGRESS.md
+# Eclipse-style output dirs (created by some IDE import paths)
+bin/
