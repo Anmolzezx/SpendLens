@@ -22,6 +22,8 @@ coroutines = "1.10.2"
 room = "2.8.4"
 robolectric = "4.16.1"
 androidxTestCore = "1.7.0"
+turbine = "1.2.1"
+lifecycleViewmodelCompose = "2.9.4"
 ktlint = "14.2.0"
 
 [libraries]
@@ -60,6 +62,8 @@ room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
