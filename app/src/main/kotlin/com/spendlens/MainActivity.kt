@@ -10,7 +10,14 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.ui.SpendLensApp
+import dagger.hilt.android.AndroidEntryPoint
 
+/**
+ * `@AndroidEntryPoint` is what makes this Activity a Hilt component holder. Without it, the
+ * generated `Hilt_MainActivity` superclass is never inserted, so `hiltViewModel()` finds nothing to
+ * resolve a ViewModel from — and the failure is at runtime, not compile time.
+ */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
