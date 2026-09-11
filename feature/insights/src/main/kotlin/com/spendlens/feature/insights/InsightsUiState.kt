@@ -18,10 +18,17 @@ sealed interface InsightsUiState {
     ) : InsightsUiState
 }
 
+/**
+ * Everything here is either already formatted or a plain value.
+ *
+ * Notably absent: the screen-reader sentence. It needs string resources, and a `Context` in a
+ * ViewModel is how a class becomes untestable — the composable assembles it from these fields.
+ */
 @Immutable
 data class CategoryInsightUiModel(
     val categoryId: String,
-    val name: String,
+    /** Null when the category is unknown; the composable supplies the fallback label. */
+    val name: String?,
     val colorIndex: Int,
     val spent: String,
     /** Null when the category has no budget for this month. */
@@ -30,8 +37,6 @@ data class CategoryInsightUiModel(
     val fractionOfBudget: Float?,
     /** Share of the month's total spend, 0f..1f. Drives the proportion bar. */
     val shareOfTotal: Float,
-    /** Screen-reader sentence — the numbers, not "92 percent". */
-    val stateDescription: String,
 )
 
 /**

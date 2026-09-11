@@ -4,6 +4,7 @@
     <string name="insights_total_this_month">Total this month</string>
     <string name="insights_by_category">By category</string>
     <string name="insights_no_budget">No budget set</string>
+    <string name="insights_uncategorised">Uncategorised</string>
     <string name="insights_of_limit">of %1$s</string>
 
     <string name="insights_empty_title">Nothing to chart yet</string>

@@ -1,5 +1,6 @@
 package com.spendlens.feature.insights
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import com.spendlens.core.designsystem.component.MeterBar
 import com.spendlens.core.designsystem.preview.ThemePreviews
 import com.spendlens.core.designsystem.theme.Spacing
 import com.spendlens.core.designsystem.theme.SpendLensTheme
+import com.spendlens.core.model.BudgetStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,9 +105,12 @@ private fun MonthHeader(
             emphasis = AmountEmphasis.LARGE,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        // Built outside the SpendProportionBar call: joinToString's lambda is not a composable
+        // scope, so stringResource cannot be invoked inside it.
+        val descriptions = uiState.categories.map { it.stateDescription() }
         SpendProportionBar(
             segments = segmentsOf(uiState.categories),
-            stateDescription = uiState.categories.joinToString(separator = ", ") { it.stateDescription },
+            stateDescription = descriptions.joinToString(separator = ", "),
             modifier = Modifier.padding(top = Spacing.Small),
         )
     }
@@ -128,7 +133,7 @@ private fun CategoryRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = category.name,
+                text = category.name ?: stringResource(R.string.insights_uncategorised),
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -155,10 +160,39 @@ private fun CategoryRow(
             // category colour, so an unbudgeted category is visible without pretending to a limit.
             fraction = category.fractionOfBudget ?: 0f,
             tone = category.status.toTone(),
-            stateDescription = category.stateDescription,
+            stateDescription = category.stateDescription(),
         )
     }
 }
+
+/**
+ * The sentence TalkBack reads. Built here rather than in the ViewModel because it needs string
+ * resources, and colour and bar length communicate nothing to a screen reader.
+ */
+@Composable
+private fun CategoryInsightUiModel.stateDescription(): String {
+    val label = name ?: stringResource(R.string.insights_uncategorised)
+    return if (limit == null) {
+        stringResource(R.string.insights_state_without_budget, label, spent)
+    } else {
+        stringResource(
+            R.string.insights_state_with_budget,
+            label,
+            spent,
+            limit,
+            stringResource(status.labelRes()),
+        )
+    }
+}
+
+@StringRes
+private fun BudgetStatus?.labelRes(): Int =
+    when (this) {
+        BudgetStatus.UNDER -> R.string.insights_status_under
+        BudgetStatus.NEAR -> R.string.insights_status_near
+        BudgetStatus.OVER -> R.string.insights_status_over
+        null -> R.string.insights_no_budget
+    }
 
 @ThemePreviews
 @Preview(name = "large font", fontScale = 2.0f, showBackground = true)
