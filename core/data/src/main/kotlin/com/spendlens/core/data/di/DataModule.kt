@@ -6,10 +6,8 @@ import com.spendlens.core.data.repository.OfflineFirstCategoryRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseRepository
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import java.time.Clock
 import javax.inject.Singleton
 
 /**
@@ -27,16 +25,4 @@ internal abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindsCategoryRepository(impl: OfflineFirstCategoryRepository): CategoryRepository
-}
-
-@Module
-@InstallIn(SingletonComponent::class)
-internal object ClockModule {
-    /**
-     * UTC, not the system default zone. Every timestamp stored is an instant, and an instant has no
-     * zone — resolving to local time is a display concern, decided per screen.
-     */
-    @Provides
-    @Singleton
-    fun providesClock(): Clock = Clock.systemUTC()
 }
