@@ -1,12 +1,14 @@
 package com.spendlens.feature.insights
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +20,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -36,8 +42,12 @@ import com.spendlens.core.model.BudgetStatus
 @Composable
 internal fun InsightsContent(
     uiState: InsightsUiState,
+    onSetBudget: (categoryId: String, limitMinor: Long) -> Unit,
+    onClearBudget: (categoryId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var editing: CategoryInsightUiModel? by remember { mutableStateOf(null) }
+
     Scaffold(
         modifier = modifier,
         topBar = { TopAppBar(title = { Text(stringResource(R.string.insights_title)) }) },
@@ -77,10 +87,27 @@ internal fun InsightsContent(
                     )
                 }
                 items(items = uiState.categories, key = { it.categoryId }) { category ->
-                    CategoryRow(category)
+                    CategoryRow(category = category, onClick = { editing = category })
                 }
             }
         }
+    }
+
+    editing?.let { category ->
+        SetBudgetDialog(
+            categoryName = category.name ?: stringResource(R.string.insights_uncategorised),
+            currency = category.currency,
+            initialAmount = category.limitInput,
+            onDismiss = { editing = null },
+            onConfirm = { limitMinor ->
+                onSetBudget(category.categoryId, limitMinor)
+                editing = null
+            },
+            onClear = {
+                onClearBudget(category.categoryId)
+                editing = null
+            },
+        )
     }
 }
 
@@ -119,11 +146,14 @@ private fun MonthHeader(
 @Composable
 private fun CategoryRow(
     category: CategoryInsightUiModel,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = Spacing.MinTouchTarget)
             .padding(horizontal = Spacing.Large, vertical = Spacing.Medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.Small),
     ) {
@@ -150,7 +180,7 @@ private fun CategoryRow(
         Text(
             text = category.limit
                 ?.let { stringResource(R.string.insights_of_limit, it) }
-                ?: stringResource(R.string.insights_no_budget),
+                ?: stringResource(R.string.insights_set_budget),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -199,7 +229,13 @@ private fun BudgetStatus?.labelRes(): Int =
 @Composable
 private fun InsightsSuccessPreview() {
     SpendLensTheme {
-        Surface { InsightsContent(uiState = InsightsPreviewData.success) }
+        Surface {
+            InsightsContent(
+                uiState = InsightsPreviewData.success,
+                onSetBudget = { _, _ -> },
+                onClearBudget = {},
+            )
+        }
     }
 }
 
@@ -207,7 +243,13 @@ private fun InsightsSuccessPreview() {
 @Composable
 private fun InsightsEmptyPreview() {
     SpendLensTheme {
-        Surface { InsightsContent(uiState = InsightsUiState.Empty) }
+        Surface {
+            InsightsContent(
+                uiState = InsightsUiState.Empty,
+                onSetBudget = { _, _ -> },
+                onClearBudget = {},
+            )
+        }
     }
 }
 
@@ -215,6 +257,12 @@ private fun InsightsEmptyPreview() {
 @Composable
 private fun InsightsLoadingPreview() {
     SpendLensTheme {
-        Surface { InsightsContent(uiState = InsightsUiState.Loading) }
+        Surface {
+            InsightsContent(
+                uiState = InsightsUiState.Loading,
+                onSetBudget = { _, _ -> },
+                onClearBudget = {},
+            )
+        }
     }
 }

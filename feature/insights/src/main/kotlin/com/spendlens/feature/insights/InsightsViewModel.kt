@@ -2,20 +2,24 @@ package com.spendlens.feature.insights
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.spendlens.core.data.repository.BudgetRepository
 import com.spendlens.core.data.repository.CategoryRepository
 import com.spendlens.core.data.repository.ExpenseRepository
+import com.spendlens.core.model.Budget
 import com.spendlens.core.model.Category
 import com.spendlens.core.model.CategorySpend
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.categorySpend
 import com.spendlens.core.model.formatAsMoney
 import com.spendlens.core.model.monthlyTotalMinor
+import com.spendlens.core.model.toAmountInput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.YearMonth
 import java.time.ZoneId
@@ -29,6 +33,7 @@ class InsightsViewModel
     constructor(
         expenseRepository: ExpenseRepository,
         categoryRepository: CategoryRepository,
+        private val budgetRepository: BudgetRepository,
         private val clock: Clock,
         private val zoneId: ZoneId,
         private val locale: Locale,
@@ -39,8 +44,9 @@ class InsightsViewModel
             combine(
                 expenseRepository.observeExpensesIn(month, zoneId),
                 categoryRepository.observeCategories(),
-            ) { expenses, categories ->
-                toUiState(expenses, categories.associateBy(Category::id))
+                budgetRepository.observeBudgets(month),
+            ) { expenses, categories, budgets ->
+                toUiState(expenses, categories.associateBy(Category::id), budgets)
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
@@ -50,17 +56,16 @@ class InsightsViewModel
         private fun toUiState(
             expenses: List<Expense>,
             categories: Map<String, Category>,
+            budgets: List<Budget>,
         ): InsightsUiState {
             val currentMonth = month
             val totalMinor = monthlyTotalMinor(expenses, currentMonth, zoneId)
             if (totalMinor == 0L) return InsightsUiState.Empty
 
             val currency = expenses.first().currency
-            // Budgets are not persisted yet, so nothing is joined here. When core:data grows a
-            // BudgetRepository, this gains a third flow and every category picks up its limit.
             val spend = categorySpend(
                 expenses = expenses,
-                budgets = emptyList(),
+                budgets = budgets,
                 month = currentMonth,
                 zoneId = zoneId,
             )
@@ -72,6 +77,24 @@ class InsightsViewModel
                     .map { it.toUiModel(totalMinor, currency, categories) }
                     .toImmutableList(),
             )
+        }
+
+        /**
+         * Budgets are stored per month, and this only ever writes the month on screen — so editing
+         * a limit in September cannot silently rewrite August's history.
+         */
+        fun setBudget(
+            categoryId: String,
+            limitMinor: Long,
+            currency: String,
+        ) {
+            viewModelScope.launch {
+                budgetRepository.setBudget(categoryId, limitMinor, currency, month)
+            }
+        }
+
+        fun clearBudget(categoryId: String) {
+            viewModelScope.launch { budgetRepository.clearBudget(categoryId, month) }
         }
 
         private fun CategorySpend.toUiModel(
@@ -86,6 +109,8 @@ class InsightsViewModel
                 colorIndex = category?.colorIndex ?: 0,
                 spent = spentMinor.formatAsMoney(currency, locale),
                 limit = limitMinor?.formatAsMoney(currency, locale),
+                limitInput = limitMinor?.toAmountInput(currency).orEmpty(),
+                currency = currency,
                 status = status,
                 fractionOfBudget = fractionOfBudget,
                 shareOfTotal = if (totalMinor > 0L) spentMinor.toFloat() / totalMinor else 0f,

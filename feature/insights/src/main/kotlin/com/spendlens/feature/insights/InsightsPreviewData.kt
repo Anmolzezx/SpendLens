@@ -6,6 +6,7 @@ import com.spendlens.core.model.monthlyTotalMinor
 import com.spendlens.core.model.sample.SampleBudgets
 import com.spendlens.core.model.sample.SampleCategories
 import com.spendlens.core.model.sample.SampleExpenses
+import com.spendlens.core.model.toAmountInput
 import kotlinx.collections.immutable.toImmutableList
 import java.time.YearMonth
 import java.time.ZoneId
@@ -42,6 +43,8 @@ internal object InsightsPreviewData {
                         colorIndex = category?.colorIndex ?: 0,
                         spent = spend.spentMinor.formatAsMoney(CURRENCY, locale),
                         limit = spend.limitMinor?.formatAsMoney(CURRENCY, locale),
+                        limitInput = spend.limitMinor?.toAmountInput(CURRENCY).orEmpty(),
+                        currency = CURRENCY,
                         status = spend.status,
                         fractionOfBudget = spend.fractionOfBudget,
                         shareOfTotal = if (totalMinor > 0L) spend.spentMinor.toFloat() / totalMinor else 0f,

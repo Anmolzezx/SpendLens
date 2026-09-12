@@ -31,8 +31,11 @@ data class CategoryInsightUiModel(
     val name: String?,
     val colorIndex: Int,
     val spent: String,
-    /** Null when the category has no budget for this month. */
+    /** Formatted for display, e.g. "$300.00". Null when the category has no budget this month. */
     val limit: String?,
+    /** The same limit as raw editable input, e.g. "300.00" — empty when unset. */
+    val limitInput: String,
+    val currency: String,
     val status: BudgetStatus?,
     val fractionOfBudget: Float?,
     /** Share of the month's total spend, 0f..1f. Drives the proportion bar. */

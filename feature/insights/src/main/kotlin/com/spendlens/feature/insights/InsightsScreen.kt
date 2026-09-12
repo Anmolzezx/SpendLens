@@ -13,5 +13,15 @@ fun InsightsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    InsightsContent(uiState = uiState, modifier = modifier)
+    InsightsContent(
+        uiState = uiState,
+        onSetBudget = { categoryId, limitMinor ->
+            viewModel.setBudget(categoryId, limitMinor, currency = DEFAULT_CURRENCY)
+        },
+        onClearBudget = viewModel::clearBudget,
+        modifier = modifier,
+    )
 }
+
+/** v1 is single-currency — §2 puts multi-currency FX out of scope. */
+private const val DEFAULT_CURRENCY = "USD"

@@ -16,4 +16,14 @@
     <string name="insights_status_under">under budget</string>
     <string name="insights_status_near">nearing budget</string>
     <string name="insights_status_over">over budget</string>
+
+    <string name="insights_budget_title">Budget for %1$s</string>
+    <string name="insights_budget_monthly_limit">Monthly limit (leave empty to clear)</string>
+    <string name="insights_budget_save">Save</string>
+    <string name="insights_budget_cancel">Cancel</string>
+    <string name="insights_budget_error_not_a_number">Enter a number, e.g. 300</string>
+    <string name="insights_budget_error_too_precise">Too many decimal places for this currency</string>
+    <string name="insights_budget_error_negative">A budget can\'t be negative</string>
+    <string name="insights_budget_error_too_large">That budget is too large</string>
+    <string name="insights_set_budget">Set budget</string>
 </resources>
