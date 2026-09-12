@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.spendlens.core.database.SeedCategoriesCallback
 import com.spendlens.core.database.SpendLensDatabase
+import com.spendlens.core.database.dao.BudgetDao
 import com.spendlens.core.database.dao.CategoryDao
 import com.spendlens.core.database.dao.ExpenseDao
 import dagger.Module
@@ -37,6 +38,9 @@ object DatabaseModule {
 
     @Provides
     fun providesCategoryDao(database: SpendLensDatabase): CategoryDao = database.categoryDao()
+
+    @Provides
+    fun providesBudgetDao(database: SpendLensDatabase): BudgetDao = database.budgetDao()
 
     private const val DATABASE_NAME = "spendlens.db"
 }
