@@ -1,7 +1,9 @@
 package com.spendlens.core.data.di
 
+import com.spendlens.core.data.repository.BudgetRepository
 import com.spendlens.core.data.repository.CategoryRepository
 import com.spendlens.core.data.repository.ExpenseRepository
+import com.spendlens.core.data.repository.OfflineFirstBudgetRepository
 import com.spendlens.core.data.repository.OfflineFirstCategoryRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseRepository
 import dagger.Binds
@@ -25,4 +27,8 @@ internal abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindsCategoryRepository(impl: OfflineFirstCategoryRepository): CategoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindsBudgetRepository(impl: OfflineFirstBudgetRepository): BudgetRepository
 }
