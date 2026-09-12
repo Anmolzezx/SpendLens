@@ -25,6 +25,7 @@ rootProject.name = "SpendLens"
 include(":app")
 include(":core:common")
 include(":core:model")
+include(":core:ocr")
 include(":core:database")
 include(":core:data")
 include(":core:designsystem")
