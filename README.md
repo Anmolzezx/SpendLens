@@ -172,7 +172,6 @@ Two design questions are open and recorded in [DECISIONS.md](DECISIONS.md): whet
 | [DECISIONS.md](DECISIONS.md) | Why the codebase is the way it is — 17 decisions, each with its alternative and cost |
 | [PROGRESS.md](PROGRESS.md) | Phase-by-phase tracker |
 | [spendlens-project-plan.md](spendlens-project-plan.md) | The original specification |
-| [docs/](docs/) | Session notes |
 
 ---
 

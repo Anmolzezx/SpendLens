@@ -29,3 +29,6 @@ captures/
 PROGRESS.md
 # Eclipse-style output dirs (created by some IDE import paths)
 bin/
+
+# Local session notes — kept out of the published repo
+docs/
