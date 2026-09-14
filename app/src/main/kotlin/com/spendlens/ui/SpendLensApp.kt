@@ -24,15 +24,20 @@ fun SpendLensApp(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
-                TopLevelDestination.entries.forEach { destination ->
-                    NavigationBarItem(
-                        selected = destination == currentTopLevel,
-                        onClick = { appState.navigateTo(destination) },
-                        // No icons yet — labels alone are unambiguous with two tabs, and a wrong
-                        // icon is worse than none. Icons land with the settings tab.
-                        icon = { Text(stringResource(destination.labelRes)) },
-                    )
+            // Hidden on destinations outside every tab's graph — today, that means capture. A tab
+            // bar under a viewfinder is a way to abandon a scan with one stray thumb. Detail and
+            // edit sit inside the Expenses graph, so they keep the bar with Expenses selected.
+            if (currentTopLevel != null) {
+                NavigationBar {
+                    TopLevelDestination.entries.forEach { destination ->
+                        NavigationBarItem(
+                            selected = destination == currentTopLevel,
+                            onClick = { appState.navigateTo(destination) },
+                            // No icons yet — labels alone are unambiguous with two tabs, and a wrong
+                            // icon is worse than none. Icons land with the settings tab.
+                            icon = { Text(stringResource(destination.labelRes)) },
+                        )
+                    }
                 }
             }
         },
