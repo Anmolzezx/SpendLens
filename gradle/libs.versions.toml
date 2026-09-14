@@ -25,6 +25,9 @@ androidxTestCore = "1.7.0"
 turbine = "1.2.1"
 cameraX = "1.6.2"
 mlkitTextRecognition = "16.0.1"
+# Pinned below 3.5: from 3.5.0 Coil is built against kotlin-stdlib 2.4, whose metadata the project's
+# Kotlin 2.2 compiler cannot read. Raise this together with the Kotlin (and KSP) version.
+coil = "3.4.0"
 lifecycleViewmodelCompose = "2.9.4"
 ktlint = "14.2.0"
 
@@ -72,6 +75,7 @@ androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", 
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }
 androidx-camera-compose = { group = "androidx.camera", name = "camera-compose", version.ref = "cameraX" }
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 
 [plugins]

@@ -2,6 +2,7 @@ package com.spendlens.feature.expenses.detail
 
 import androidx.compose.runtime.Immutable
 import com.spendlens.core.model.SyncState
+import java.io.File
 
 /**
  * [NotFound] is a first-class state, not an error.
@@ -29,6 +30,7 @@ data class ExpenseDetailUiModel(
     val categoryName: String?,
     val categoryColorIndex: Int,
     val note: String?,
-    val receiptImagePath: String?,
+    /** Resolved absolute file, or null when there is no receipt. May not exist on disk. */
+    val receiptImage: File?,
     val syncState: SyncState,
 )

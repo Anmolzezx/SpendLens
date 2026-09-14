@@ -24,8 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import coil3.compose.SubcomposeAsyncImage
 import com.spendlens.core.designsystem.component.AmountEmphasis
 import com.spendlens.core.designsystem.component.AmountText
 import com.spendlens.core.designsystem.component.CategoryChip
@@ -37,6 +39,7 @@ import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Tone
 import com.spendlens.core.model.SyncState
 import com.spendlens.feature.expenses.R
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,22 +151,8 @@ private fun ExpenseDetail(
         }
 
         DetailRow(label = stringResource(R.string.expense_detail_receipt)) {
-            if (expense.receiptImagePath != null) {
-                // Placeholder until phase 2 stores real images and Coil loads them.
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(RECEIPT_ASPECT_RATIO)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = expense.receiptImagePath,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            if (expense.receiptImage != null) {
+                ReceiptImage(file = expense.receiptImage)
             } else {
                 Text(
                     text = stringResource(R.string.expense_detail_no_receipt),
@@ -187,6 +176,52 @@ private fun ExpenseDetail(
             }
         }
     }
+}
+
+/**
+ * The stored receipt photo.
+ *
+ * `SubcomposeAsyncImage` for its loading and error slots. Its subcomposition cost is real in a
+ * scrolling list, but this is one image on one screen.
+ *
+ * The error state is not hypothetical: the row can outlive its file — storage cleared from Settings,
+ * or a restore that brought back the database without `filesDir`. A missing photo must say so rather
+ * than leave an empty grey box the user can only guess about.
+ *
+ * `ContentScale.Fit`, not `Crop`: cropping a receipt can cut off the total, which is the one line the
+ * user opened this to read.
+ */
+@Composable
+private fun ReceiptImage(
+    file: File,
+    modifier: Modifier = Modifier,
+) {
+    val frame = modifier
+        .fillMaxWidth()
+        .aspectRatio(RECEIPT_ASPECT_RATIO)
+        .clip(MaterialTheme.shapes.medium)
+        .background(MaterialTheme.colorScheme.surfaceVariant)
+
+    SubcomposeAsyncImage(
+        model = file,
+        contentDescription = stringResource(R.string.expense_detail_receipt_photo),
+        modifier = frame,
+        contentScale = ContentScale.Fit,
+        loading = {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        },
+        error = {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(R.string.expense_detail_receipt_unavailable),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+    )
 }
 
 @Composable
@@ -216,7 +251,11 @@ private fun SyncState.badge(): Pair<String, Tone>? =
         SyncState.CONFLICT -> stringResource(R.string.expenses_sync_conflict) to Tone.CRITICAL
     }
 
-private const val RECEIPT_ASPECT_RATIO = 4f / 3f
+/**
+ * Portrait, matching both the shape of a receipt and a phone camera's capture. A landscape frame put
+ * the real capture between two grey bars that took up most of the box.
+ */
+private const val RECEIPT_ASPECT_RATIO = 3f / 4f
 
 @ThemePreviews
 @Preview(name = "large font", fontScale = 2.0f, showBackground = true)

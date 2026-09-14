@@ -5,6 +5,7 @@ import com.spendlens.core.model.Expense
 import com.spendlens.core.model.formatAsMoney
 import com.spendlens.core.model.sample.SampleCategories
 import com.spendlens.core.model.sample.SampleExpenses
+import java.io.File
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -19,6 +20,7 @@ internal fun Expense.toDetailUiModel(
     category: Category?,
     zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault(),
+    resolveReceipt: (String) -> File?,
 ) = ExpenseDetailUiModel(
     id = id,
     merchant = merchant,
@@ -31,7 +33,7 @@ internal fun Expense.toDetailUiModel(
     categoryName = category?.name,
     categoryColorIndex = category?.colorIndex ?: 0,
     note = note,
-    receiptImagePath = receiptImagePath,
+    receiptImage = receiptImagePath?.let(resolveReceipt),
     syncState = syncState,
 )
 
@@ -53,6 +55,9 @@ internal object ExpenseDetailPreviewData {
                 category = SampleCategories.byId[expense.categoryId],
                 zoneId = zone,
                 locale = locale,
+                // Sample paths point nowhere, so previews render the "unavailable" fallback — which
+                // is the state worth checking in light and dark anyway.
+                resolveReceipt = ::File,
             ),
         )
     }
