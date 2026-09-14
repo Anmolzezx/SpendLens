@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -54,7 +55,17 @@ internal fun ExpenseListContent(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.expenses_title)) })
+            TopAppBar(
+                title = { Text(stringResource(R.string.expenses_title)) },
+                actions = {
+                    // Always visible. The empty state's "Scan a receipt" button disappears as soon
+                    // as the list has a row, so without this the app's headline feature was
+                    // unreachable after the very first expense — found by running it, not by tests.
+                    TextButton(onClick = onScanReceiptClick) {
+                        Text(stringResource(R.string.expenses_scan))
+                    }
+                },
+            )
         },
         floatingActionButton = {
             // The content overload, not the text/icon one: passing `icon = {}` still reserves the

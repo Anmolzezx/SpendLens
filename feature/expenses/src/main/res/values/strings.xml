@@ -4,6 +4,7 @@
          at build time, so an unprefixed "title" would collide across features. -->
     <string name="expenses_title">Expenses</string>
     <string name="expenses_add">Add</string>
+    <string name="expenses_scan">Scan</string>
     <string name="expenses_month_total">This month</string>
     <string name="expenses_uncategorised">Uncategorised</string>
     <string name="expenses_receipt">Receipt</string>
