@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_title">Scan receipt</string>
+    <string name="capture_shutter">Capture</string>
+    <string name="capture_cancel">Cancel</string>
+    <string name="capture_processing">Reading receipt…</string>
+
+    <string name="capture_permission_title">Camera access needed</string>
+    <string name="capture_permission_description">SpendLens uses the camera to read receipts. Photos stay on your device.</string>
+    <string name="capture_permission_grant">Allow camera</string>
+
+    <string name="capture_permission_denied_title">Camera access is blocked</string>
+    <string name="capture_permission_denied_description">Android won\'t ask again. You can turn the camera on for SpendLens in Settings.</string>
+    <string name="capture_permission_settings">Open settings</string>
+
+    <string name="capture_failed_title">Couldn\'t take the photo</string>
+    <string name="capture_failed_description">Something went wrong with the camera. Try again, or enter the expense by hand.</string>
+    <string name="capture_recognition_failed_title">Couldn\'t read that photo</string>
+    <string name="capture_recognition_failed_description">Try again with more light, or enter the expense by hand.</string>
+    <string name="capture_retry">Try again</string>
+    <string name="capture_enter_manually">Enter by hand</string>
+</resources>
