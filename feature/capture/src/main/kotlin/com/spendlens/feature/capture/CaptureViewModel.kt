@@ -2,6 +2,7 @@ package com.spendlens.feature.capture
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.spendlens.core.data.receipt.ReceiptImageStore
 import com.spendlens.core.ocr.ParsedReceipt
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

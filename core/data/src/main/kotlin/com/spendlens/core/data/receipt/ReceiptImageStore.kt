@@ -1,4 +1,4 @@
-package com.spendlens.feature.capture
+package com.spendlens.core.data.receipt
 
 import android.content.Context
 import com.spendlens.core.common.di.Dispatcher
@@ -13,6 +13,10 @@ import javax.inject.Singleton
 
 /**
  * Receipt images live in app-internal storage.
+ *
+ * In `core:data` rather than `feature:capture` because two features touch these files: capture writes
+ * them, and the expense edit screen must delete one when a scan is abandoned. Features cannot import
+ * each other, so the shared piece moves down a layer.
  *
  * Not `MediaStore` and not external storage: a receipt is a financial record, and it has no business
  * appearing in the user's photo gallery or being readable by other apps. Internal storage is private

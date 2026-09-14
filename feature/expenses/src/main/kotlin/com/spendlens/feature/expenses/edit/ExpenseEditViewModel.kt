@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.spendlens.core.data.receipt.ReceiptImageStore
 import com.spendlens.core.data.repository.CategoryRepository
 import com.spendlens.core.data.repository.ExpenseRepository
 import com.spendlens.core.model.Expense
@@ -34,9 +35,11 @@ class ExpenseEditViewModel
         private val expenseRepository: ExpenseRepository,
         categoryRepository: CategoryRepository,
         private val clock: Clock,
+        private val receiptImageStore: ReceiptImageStore,
     ) : ViewModel() {
         private val route: ExpenseEditRoute = savedStateHandle.toRoute()
         private val isNewExpense = route.expenseId == null
+        private var saved = false
 
         // Seeded from the route so a scanned receipt arrives pre-filled. Anything the parser could
         // not read stays blank rather than being guessed at.
@@ -120,6 +123,7 @@ class ExpenseEditViewModel
             }
 
             val amountMinor = (parseMoney(state.amount, state.currency) as MoneyParseResult.Success).amountMinor
+            saved = true
             viewModelScope.launch {
                 expenseRepository.upsert(
                     Expense(
@@ -141,6 +145,26 @@ class ExpenseEditViewModel
                 )
             }
             return true
+        }
+
+        /**
+         * A scan the user backed out of must not leave its photo behind.
+         *
+         * `onCleared` rather than a cancel callback, because it covers every way off the screen — the
+         * Cancel button, system back, and predictive back — with one hook. It only fires when the
+         * screen is really gone, not on rotation. The photo belongs to this form only while the
+         * expense is new and unsaved; once saved, the expense row owns it.
+         *
+         * A single `unlink` on the main thread is deliberate: `viewModelScope` is already cancelled
+         * here, and one small file delete is not worth an application-scoped coroutine.
+         */
+        override fun onCleared() {
+            val abandonedScan = isNewExpense && !saved
+            val imagePath = form.value.receiptImagePath
+            if (abandonedScan && imagePath != null) {
+                receiptImageStore.deleteQuietly(receiptImageStore.resolve(imagePath))
+            }
+            super.onCleared()
         }
 
         private data class FormState(
