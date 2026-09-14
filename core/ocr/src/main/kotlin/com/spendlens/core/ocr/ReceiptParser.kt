@@ -20,10 +20,11 @@ class ReceiptParser(
 ) {
     fun parse(text: RecognizedText): ParsedReceipt {
         if (text.lines.isEmpty()) return ParsedReceipt.EMPTY
+        val rows = assembleRows(text.lines)
         return ParsedReceipt(
-            merchant = findMerchant(text.lines),
-            totalMinor = findTotal(text.lines),
-            date = findDate(text.lines),
+            merchant = findMerchant(rows),
+            totalMinor = findTotal(rows),
+            date = findDate(rows),
         )
     }
 
@@ -67,9 +68,10 @@ class ReceiptParser(
 
         if (labelled.isNotEmpty()) return labelled.last()
 
-        return lines
-            .flatMap { it.text.allAmounts() }
-            .maxOrNull()
+        // Prefer amounts printed with a decimal part. A bare integer on a receipt is as likely to be
+        // a street number, a quantity or a store id as a price — "1200 Market Street" is not $1,200.
+        val decimal = lines.flatMap { it.text.allAmounts(requireDecimal = true) }
+        return (decimal.ifEmpty { lines.flatMap { it.text.allAmounts() } }).maxOrNull()
     }
 
     private fun findDate(lines: List<RecognizedLine>): LocalDate? =
@@ -83,12 +85,21 @@ class ReceiptParser(
         return TOTAL_LABELS.any { upper.contains(it) }
     }
 
-    /** Amounts as minor units, in the order they appear. */
-    private fun String.allAmounts(): List<Long> =
+    /**
+     * Amounts as minor units, in the order they appear.
+     *
+     * Dates are removed first. Otherwise "08/26/2026" yields 2026, which on a receipt with no labelled
+     * total is the largest number present — the exact misread the first on-device run produced.
+     */
+    private fun String.allAmounts(requireDecimal: Boolean = false): List<Long> =
         AMOUNT_PATTERN
-            .findAll(this)
-            .mapNotNull { it.groupValues[1].toMinorUnitsOrNull(currencyCode) }
+            .findAll(withoutDates())
+            .map { it.groupValues[1] }
+            .filter { !requireDecimal || DECIMAL_PART.containsMatchIn(it) }
+            .mapNotNull { it.toMinorUnitsOrNull(currencyCode) }
             .toList()
+
+    private fun String.withoutDates(): String = DATE_PATTERNS.fold(this) { text, pattern -> pattern.replace(text, " ") }
 
     private fun String.lastAmountOrNull(): Long? = allAmounts().lastOrNull()
 
@@ -130,6 +141,9 @@ class ReceiptParser(
         val STREET_NUMBER_PATTERN = Regex("""^\d+\s+\w""")
         val PHONE_PATTERN = Regex("""(\+?\d[\d\s().-]{7,}\d)""")
         val WHITESPACE_RUN = Regex("""\s+""")
+
+        /** A decimal separator followed by exactly two digits at the end of the token. */
+        val DECIMAL_PART = Regex("""[.,]\d{2}$""")
 
         /**
          * An amount, optionally preceded by a currency symbol. Grouping separators are allowed here
@@ -214,8 +228,15 @@ private fun expandYear(year: Int): Int = if (year < CENTURY) CENTURY_PIVOT + yea
 
 private fun localeIsDayFirst(locale: Locale): Boolean = locale.country != "US"
 
-private val IsoDatePattern = Regex("""\b(\d{4})-(\d{1,2})-(\d{1,2})\b""")
-private val NumericDatePattern = Regex("""\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b""")
+private val DATE_PATTERNS: List<Regex> by lazy { listOf(IsoDatePattern, NumericDatePattern, TextualDatePattern) }
+
+/**
+ * Separators allow one space either side. Recognising a JPEG, ML Kit returned "08/26/ 2026" for a
+ * cleanly printed "08/26/2026", and a real camera always produces a compressed image. Exactly one
+ * space, not any whitespace, so two separate numbers on a line do not fuse into a date.
+ */
+private val IsoDatePattern = Regex("""\b(\d{4}) ?- ?(\d{1,2}) ?- ?(\d{1,2})\b""")
+private val NumericDatePattern = Regex("""\b(\d{1,2}) ?[/.-] ?(\d{1,2}) ?[/.-] ?(\d{2,4})\b""")
 private val TextualDatePattern = Regex("""\b(\d{1,2})\s+([A-Za-z]{3,9})\.?\s+(\d{2,4})\b""")
 
 private const val MAX_MONTH = 12

@@ -17,6 +17,16 @@ data class RecognizedLine(
      * and that ordering survives when the text itself is garbled.
      */
     val verticalPosition: Float,
+    /**
+     * Left edge as a fraction of image width. Orders the pieces of a row that ML Kit split apart —
+     * a receipt prints the label on the left and its amount far to the right.
+     */
+    val horizontalPosition: Float = 0f,
+    /**
+     * Line height as a fraction of image height. Zero means the source has no geometry, and such
+     * lines are never merged into rows.
+     */
+    val heightFraction: Float = 0f,
 )
 
 /** The full recognition result, ordered top to bottom. */
