@@ -38,8 +38,15 @@ class ExpenseEditViewModel
         private val route: ExpenseEditRoute = savedStateHandle.toRoute()
         private val isNewExpense = route.expenseId == null
 
+        // Seeded from the route so a scanned receipt arrives pre-filled. Anything the parser could
+        // not read stays blank rather than being guessed at.
         private val form = MutableStateFlow(
-            FormState(occurredAtMillis = clock.millis()),
+            FormState(
+                merchant = route.merchant.orEmpty(),
+                amount = route.amountMinor?.toAmountInput(DEFAULT_CURRENCY).orEmpty(),
+                occurredAtMillis = route.occurredAtMillis ?: clock.millis(),
+                receiptImagePath = route.receiptImagePath,
+            ),
         )
 
         val uiState: StateFlow<ExpenseEditUiState> =
@@ -84,6 +91,7 @@ class ExpenseEditViewModel
                             categoryId = existing.categoryId,
                             note = existing.note.orEmpty(),
                             occurredAtMillis = existing.occurredAt.toEpochMilli(),
+                            receiptImagePath = existing.receiptImagePath,
                         )
                     }
                 }
@@ -124,7 +132,7 @@ class ExpenseEditViewModel
                         occurredAt = Instant.ofEpochMilli(state.occurredAtMillis),
                         categoryId = requireNotNull(state.categoryId),
                         note = state.note.trim().takeIf { it.isNotEmpty() },
-                        receiptImagePath = null,
+                        receiptImagePath = form.value.receiptImagePath,
                         // Both stamped by the repository; these are placeholders.
                         syncState = SyncState.PENDING,
                         updatedAt = clock.instant(),
@@ -142,6 +150,7 @@ class ExpenseEditViewModel
             val categoryId: String? = null,
             val note: String = "",
             val occurredAtMillis: Long,
+            val receiptImagePath: String? = null,
             val showErrors: Boolean = false,
         )
 

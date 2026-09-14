@@ -25,10 +25,21 @@ data class ExpenseDetailRoute(
     val expenseId: String,
 )
 
-/** [expenseId] is null when creating a new expense — the same screen serves both. */
+/**
+ * [expenseId] is null when creating a new expense — the same screen serves both.
+ *
+ * The remaining fields carry what receipt OCR managed to read. They ride on the route rather than in
+ * a shared holder so the prefill survives process death for free, and because typed route arguments
+ * are exactly the mechanism for handing data to a destination. Each is nullable: the parser returns
+ * nulls for anything it could not read, and the form shows a blank field rather than a guess.
+ */
 @Serializable
 data class ExpenseEditRoute(
     val expenseId: String? = null,
+    val merchant: String? = null,
+    val amountMinor: Long? = null,
+    val occurredAtMillis: Long? = null,
+    val receiptImagePath: String? = null,
 )
 
 fun NavController.navigateToExpenses(navOptions: NavOptions? = null) =

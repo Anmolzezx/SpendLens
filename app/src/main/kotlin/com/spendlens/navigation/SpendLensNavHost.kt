@@ -4,9 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import com.spendlens.feature.capture.navigation.CaptureRoute
+import com.spendlens.feature.capture.navigation.captureScreen
+import com.spendlens.feature.capture.navigation.navigateToCapture
+import com.spendlens.feature.expenses.navigation.ExpenseEditRoute
 import com.spendlens.feature.expenses.navigation.ExpensesGraph
 import com.spendlens.feature.expenses.navigation.expensesGraph
 import com.spendlens.feature.insights.navigation.insightsGraph
+import java.time.ZoneId
 
 /**
  * The one place that knows about every feature.
@@ -26,9 +31,35 @@ fun SpendLensNavHost(
         modifier = modifier,
     ) {
         expensesGraph(
-            // TODO(phase 2): navController.navigateToCapture()
-            onNavigateToCapture = {},
+            onNavigateToCapture = { navController.navigateToCapture() },
             navController = navController,
+        )
+        captureScreen(
+            // The cross-feature join: capture produces a ParsedReceipt, expenses consumes it, and
+            // neither module imports the other — this is the only place that knows both exist.
+            onCaptured = { receipt, imagePath ->
+                navController.navigate(
+                    ExpenseEditRoute(
+                        merchant = receipt.merchant,
+                        amountMinor = receipt.totalMinor,
+                        occurredAtMillis = receipt.date
+                            ?.atStartOfDay(ZoneId.systemDefault())
+                            ?.toInstant()
+                            ?.toEpochMilli(),
+                        receiptImagePath = imagePath,
+                    ),
+                ) {
+                    // Do not leave the viewfinder behind the review form; back should return to
+                    // the list, not to a camera pointing at a receipt already captured.
+                    popUpTo<CaptureRoute> { inclusive = true }
+                }
+            },
+            onEnterManually = {
+                navController.navigate(ExpenseEditRoute()) {
+                    popUpTo<CaptureRoute> { inclusive = true }
+                }
+            },
+            onCancel = { navController.popBackStack() },
         )
         insightsGraph()
     }
