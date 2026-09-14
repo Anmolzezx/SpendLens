@@ -23,6 +23,8 @@ room = "2.8.4"
 robolectric = "4.16.1"
 androidxTestCore = "1.7.0"
 turbine = "1.2.1"
+cameraX = "1.6.2"
+mlkitTextRecognition = "16.0.1"
 lifecycleViewmodelCompose = "2.9.4"
 ktlint = "14.2.0"
 
@@ -64,6 +66,11 @@ room-testing = { group = "androidx.room", name = "room-testing", version.ref = "
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraX" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraX" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }
+androidx-camera-compose = { group = "androidx.camera", name = "camera-compose", version.ref = "cameraX" }
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 
 [plugins]

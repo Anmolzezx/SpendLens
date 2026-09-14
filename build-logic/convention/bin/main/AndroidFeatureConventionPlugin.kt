@@ -29,6 +29,8 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 "implementation"(project(":core:model"))
                 "implementation"(project(":core:designsystem"))
                 "implementation"(project(":core:data"))
+                // Dispatcher qualifiers — a feature that does work off the main thread needs these.
+                "implementation"(project(":core:common"))
 
                 // A feature owns its own navigation routes and graph, so it needs the navigation
                 // API. kotlinx-serialization-json is what type-safe routes encode arguments with.

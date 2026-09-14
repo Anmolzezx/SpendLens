@@ -31,6 +31,7 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.designsystem)
     implementation(projects.core.model)
+    implementation(projects.feature.capture)
     implementation(projects.feature.expenses)
     implementation(projects.feature.insights)
 
