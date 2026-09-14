@@ -42,7 +42,7 @@ class MlKitReceiptRecognizer
                     ?: return@withContext ParsedReceipt.EMPTY
 
                 val text = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
-                parser.parse(text.toRecognizedText(imageHeight = bitmap.height))
+                parser.parse(text.toRecognizedText(imageWidth = bitmap.width, imageHeight = bitmap.height))
             }
     }
 
@@ -53,7 +53,10 @@ class MlKitReceiptRecognizer
  * interleave. The parser's "merchant is near the top, total is near the bottom" rules only hold if
  * the lines really are ordered down the page.
  */
-internal fun Text.toRecognizedText(imageHeight: Int): RecognizedText =
+internal fun Text.toRecognizedText(
+    imageWidth: Int,
+    imageHeight: Int,
+): RecognizedText =
     RecognizedText(
         lines = textBlocks
             .flatMap { it.lines }
@@ -66,9 +69,18 @@ internal fun Text.toRecognizedText(imageHeight: Int): RecognizedText =
                         boxBottom = box?.bottom ?: 0,
                         imageHeight = imageHeight,
                     ),
+                    // Left edge and height feed row assembly, which rejoins a label and the amount
+                    // ML Kit reported as separate lines. No box means no geometry, and no merging.
+                    horizontalPosition = fractionOf(box?.left ?: 0, imageWidth),
+                    heightFraction = fractionOf(box?.height() ?: 0, imageHeight),
                 )
             }.sortedBy { it.verticalPosition },
     )
+
+private fun fractionOf(
+    pixels: Int,
+    total: Int,
+): Float = if (total <= 0) 0f else (pixels.toFloat() / total).coerceIn(0f, 1f)
 
 /** Bridges a Play Services [com.google.android.gms.tasks.Task] into a cancellable coroutine. */
 private suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T =

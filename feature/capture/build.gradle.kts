@@ -4,6 +4,10 @@ plugins {
 
 android {
     namespace = "com.spendlens.feature.capture"
+
+    defaultConfig {
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
 }
 
 dependencies {
@@ -19,4 +23,10 @@ dependencies {
     // Bundled model, not the Play Services one: it works offline on first launch with no download,
     // which is the whole premise of the app. The cost is roughly 4MB of APK.
     implementation(libs.mlkit.text.recognition)
+
+    // Instrumented, not Robolectric: ML Kit runs a native model that only exists on a real Android
+    // runtime. This is the one test in the project that genuinely needs a device or emulator.
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 }
