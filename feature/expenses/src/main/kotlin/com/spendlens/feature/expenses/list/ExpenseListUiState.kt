@@ -22,6 +22,8 @@ sealed interface ExpenseListUiState {
          * device is hidden from the list, yet still waits for a decision.
          */
         val conflictedExpenseIds: ImmutableList<String> = persistentListOf(),
+        /** Shown here too: a new device's first sync is exactly when the list is still empty. */
+        val syncStatus: SyncStatusUiModel = SyncStatusUiModel.NeverSynced,
     ) : ExpenseListUiState
 
     data class Success(
@@ -30,9 +32,22 @@ sealed interface ExpenseListUiState {
         /** Waiting to upload. Conflicts are not counted here; they need the user, not the network. */
         val pendingCount: Int,
         val conflictedExpenseIds: ImmutableList<String> = persistentListOf(),
+        val syncStatus: SyncStatusUiModel = SyncStatusUiModel.NeverSynced,
     ) : ExpenseListUiState
 
     data class Error(
         val message: String,
     ) : ExpenseListUiState
+}
+
+/** Where this device stands with the server, as one line of text. */
+sealed interface SyncStatusUiModel {
+    data object Syncing : SyncStatusUiModel
+
+    data object NeverSynced : SyncStatusUiModel
+
+    /** [formattedTime] is just a time for today, and a date and time for anything older. */
+    data class SyncedAt(
+        val formattedTime: String,
+    ) : SyncStatusUiModel
 }

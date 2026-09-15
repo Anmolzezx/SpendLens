@@ -9,6 +9,8 @@ import com.spendlens.core.model.ExpenseConflict
 import com.spendlens.core.model.SyncState
 import com.spendlens.core.testing.repository.TestExpenseConflictRepository
 import com.spendlens.core.testing.repository.TestExpenseRepository
+import com.spendlens.core.testing.sync.TestSyncManager
+import com.spendlens.core.testing.sync.TestSyncStatusRepository
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -184,13 +186,71 @@ class ExpenseListViewModelTest {
             assertTrue("tombstone kept for sync", repository.current.single { it.id == "a" }.isDeleted)
         }
 
+    // -- sync status ----------------------------------------------------------------------------------
+
+    @Test
+    fun `says when it last synced, as a time for today`() =
+        runTest {
+            val syncStatus = TestSyncStatusRepository(lastSyncedAt = Instant.parse("2026-08-26T09:30:00Z"))
+            val viewModel = viewModel(TestExpenseRepository(listOf(expense(id = "a"))), syncStatus = syncStatus)
+
+            viewModel.uiState.test {
+                awaitItem()
+                val status = (awaitItem() as ExpenseListUiState.Success).syncStatus as SyncStatusUiModel.SyncedAt
+                assertTrue(status.formattedTime, status.formattedTime.startsWith("9:30"))
+            }
+        }
+
+    /** "Synced 9:30 AM" on a later day would read as this morning. */
+    @Test
+    fun `includes the date when the last sync was not today`() =
+        runTest {
+            val syncStatus = TestSyncStatusRepository(lastSyncedAt = Instant.parse("2026-08-25T09:30:00Z"))
+            val viewModel = viewModel(TestExpenseRepository(listOf(expense(id = "a"))), syncStatus = syncStatus)
+
+            viewModel.uiState.test {
+                awaitItem()
+                val status = (awaitItem() as ExpenseListUiState.Success).syncStatus as SyncStatusUiModel.SyncedAt
+                assertTrue(status.formattedTime, status.formattedTime.startsWith("Aug 25, 2026"))
+            }
+        }
+
+    @Test
+    fun `a running sync is shown instead of the last sync time`() =
+        runTest {
+            val syncManager = TestSyncManager().apply { isSyncing.value = true }
+            val syncStatus = TestSyncStatusRepository(lastSyncedAt = Instant.parse("2026-08-26T09:30:00Z"))
+            val viewModel = viewModel(TestExpenseRepository(), syncManager = syncManager, syncStatus = syncStatus)
+
+            viewModel.uiState.test {
+                awaitItem()
+                assertEquals(SyncStatusUiModel.Syncing, (awaitItem() as ExpenseListUiState.Empty).syncStatus)
+            }
+        }
+
+    @Test
+    fun `sync now asks for a sync`() =
+        runTest {
+            val syncManager = TestSyncManager()
+            val viewModel = viewModel(TestExpenseRepository(), syncManager = syncManager)
+
+            viewModel.syncNow()
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(1, syncManager.syncNowCount)
+        }
+
     private fun viewModel(
         repository: TestExpenseRepository,
         conflicts: TestExpenseConflictRepository = TestExpenseConflictRepository(),
+        syncManager: TestSyncManager = TestSyncManager(),
+        syncStatus: TestSyncStatusRepository = TestSyncStatusRepository(),
     ) = ExpenseListViewModel(
         expenseRepository = repository,
         categoryRepository = FakeCategoryRepository(DefaultCategories.all),
         conflictRepository = conflicts,
+        syncManager = syncManager,
+        syncStatusRepository = syncStatus,
         clock = Clock.fixed(fixedNow, utc),
         zoneId = utc,
         locale = Locale.US,

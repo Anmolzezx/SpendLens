@@ -32,7 +32,8 @@ internal object ExpenseListPreviewData {
                 )
             }.toImmutableList(),
         monthTotal = totalMinor(SampleExpenses.all).formatAsMoney("USD", locale),
-        pendingCount = SampleExpenses.all.count { it.syncState != SyncState.SYNCED },
+        pendingCount = SampleExpenses.all.count { it.syncState == SyncState.PENDING },
+        syncStatus = SyncStatusUiModel.SyncedAt("9:41 AM"),
     )
 
     val expenses = success.expenses

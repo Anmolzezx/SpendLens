@@ -29,6 +29,7 @@ fun ExpenseListScreen(
         uiState = uiState,
         onExpenseClick = onExpenseClick,
         onReviewConflictClick = onReviewConflictClick,
+        onSyncNowClick = viewModel::syncNow,
         onAddExpenseClick = onAddExpenseClick,
         onScanReceiptClick = onScanReceiptClick,
         modifier = modifier,

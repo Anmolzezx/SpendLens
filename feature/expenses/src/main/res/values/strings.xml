@@ -23,6 +23,11 @@
     </plurals>
     <string name="expenses_conflict_review">Review</string>
 
+    <string name="expenses_sync_status_syncing">Syncing…</string>
+    <string name="expenses_sync_status_never">Not synced yet</string>
+    <string name="expenses_sync_status_synced">Synced %1$s</string>
+    <string name="expenses_sync_now">Sync now</string>
+
     <string name="expenses_empty_title">No expenses yet</string>
     <string name="expenses_empty_description">Scan a receipt or add one by hand — everything works offline.</string>
     <string name="expenses_empty_action">Scan a receipt</string>

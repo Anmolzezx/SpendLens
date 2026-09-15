@@ -26,6 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.spendlens.core.designsystem.component.AmountEmphasis
@@ -51,6 +54,7 @@ internal fun ExpenseListContent(
     uiState: ExpenseListUiState,
     onExpenseClick: (String) -> Unit,
     onReviewConflictClick: (String) -> Unit,
+    onSyncNowClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
     onScanReceiptClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -82,6 +86,11 @@ internal fun ExpenseListContent(
             ExpenseListUiState.Loading -> LoadingState(Modifier.padding(padding))
 
             is ExpenseListUiState.Empty -> Column(Modifier.padding(padding)) {
+                SyncStatusRow(
+                    status = uiState.syncStatus,
+                    onSyncNowClick = onSyncNowClick,
+                    modifier = Modifier.padding(horizontal = Spacing.Large, vertical = Spacing.Small),
+                )
                 if (uiState.conflictedExpenseIds.isNotEmpty()) {
                     ConflictNotice(
                         count = uiState.conflictedExpenseIds.size,
@@ -131,7 +140,7 @@ internal fun ExpenseListContent(
                     bottom = padding.calculateBottomPadding() + FabClearance,
                 ),
             ) {
-                item { MonthSummary(uiState) }
+                item { MonthSummary(uiState = uiState, onSyncNowClick = onSyncNowClick) }
                 if (uiState.conflictedExpenseIds.isNotEmpty()) {
                     item {
                         ConflictNotice(
@@ -161,6 +170,7 @@ internal fun ExpenseListContent(
 @Composable
 private fun MonthSummary(
     uiState: ExpenseListUiState.Success,
+    onSyncNowClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -188,6 +198,42 @@ private fun MonthSummary(
                 ),
                 tone = Tone.WARNING,
             )
+        }
+        SyncStatusRow(status = uiState.syncStatus, onSyncNowClick = onSyncNowClick)
+    }
+}
+
+/**
+ * "Synced 9:41 AM · Sync now". A polite live region, so TalkBack announces a sync starting and
+ * finishing without the user having to find the line again.
+ */
+@Composable
+private fun SyncStatusRow(
+    status: SyncStatusUiModel,
+    onSyncNowClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = when (status) {
+                SyncStatusUiModel.Syncing -> stringResource(R.string.expenses_sync_status_syncing)
+                SyncStatusUiModel.NeverSynced -> stringResource(R.string.expenses_sync_status_never)
+                is SyncStatusUiModel.SyncedAt -> stringResource(
+                    R.string.expenses_sync_status_synced,
+                    status.formattedTime,
+                )
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .weight(1f)
+                .semantics { liveRegion = LiveRegionMode.Polite },
+        )
+        TextButton(onClick = onSyncNowClick, enabled = status != SyncStatusUiModel.Syncing) {
+            Text(stringResource(R.string.expenses_sync_now))
         }
     }
 }
@@ -254,6 +300,7 @@ private fun ExpenseListSuccessPreview() {
                 uiState = ExpenseListPreviewData.success,
                 onExpenseClick = {},
                 onReviewConflictClick = {},
+                onSyncNowClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -270,6 +317,7 @@ private fun ExpenseListEmptyPreview() {
                 uiState = ExpenseListUiState.Empty(hasActiveFilters = false),
                 onExpenseClick = {},
                 onReviewConflictClick = {},
+                onSyncNowClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -286,6 +334,7 @@ private fun ExpenseListFilteredEmptyPreview() {
                 uiState = ExpenseListUiState.Empty(hasActiveFilters = true),
                 onExpenseClick = {},
                 onReviewConflictClick = {},
+                onSyncNowClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -302,6 +351,7 @@ private fun ExpenseListLoadingPreview() {
                 uiState = ExpenseListUiState.Loading,
                 onExpenseClick = {},
                 onReviewConflictClick = {},
+                onSyncNowClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -318,6 +368,7 @@ private fun ExpenseListErrorPreview() {
                 uiState = ExpenseListUiState.Error("No connection, and nothing cached yet."),
                 onExpenseClick = {},
                 onReviewConflictClick = {},
+                onSyncNowClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )

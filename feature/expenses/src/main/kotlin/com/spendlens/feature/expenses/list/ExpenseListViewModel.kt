@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.spendlens.core.data.repository.CategoryRepository
 import com.spendlens.core.data.repository.ExpenseConflictRepository
 import com.spendlens.core.data.repository.ExpenseRepository
+import com.spendlens.core.data.sync.SyncManager
+import com.spendlens.core.data.sync.SyncStatusRepository
 import com.spendlens.core.model.Category
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.SyncState
@@ -31,6 +33,8 @@ class ExpenseListViewModel
         private val expenseRepository: ExpenseRepository,
         categoryRepository: CategoryRepository,
         conflictRepository: ExpenseConflictRepository,
+        private val syncManager: SyncManager,
+        syncStatusRepository: SyncStatusRepository,
         private val clock: Clock,
         private val zoneId: ZoneId,
         private val locale: Locale,
@@ -40,8 +44,15 @@ class ExpenseListViewModel
                 expenseRepository.observeExpenses(),
                 categoryRepository.observeCategories(),
                 conflictRepository.observeConflictedExpenseIds(),
-            ) { expenses, categories, conflictedIds ->
-                toUiState(expenses, categories.associateBy(Category::id), conflictedIds.toImmutableList())
+                syncManager.isSyncing,
+                syncStatusRepository.observeLastSyncedAt(),
+            ) { expenses, categories, conflictedIds, isSyncing, lastSyncedAt ->
+                toUiState(
+                    expenses = expenses,
+                    categories = categories.associateBy(Category::id),
+                    conflictedIds = conflictedIds.toImmutableList(),
+                    syncStatus = syncStatusOf(isSyncing, lastSyncedAt, clock, zoneId, locale),
+                )
             }.stateIn(
                 scope = viewModelScope,
                 // 5s rather than Eagerly: collection survives a configuration change without
@@ -54,15 +65,24 @@ class ExpenseListViewModel
             viewModelScope.launch { expenseRepository.delete(id) }
         }
 
+        fun syncNow() {
+            viewModelScope.launch { syncManager.syncNow() }
+        }
+
         private fun toUiState(
             expenses: List<Expense>,
             categories: Map<String, Category>,
             conflictedIds: ImmutableList<String>,
+            syncStatus: SyncStatusUiModel,
         ): ExpenseListUiState {
             if (expenses.isEmpty()) {
                 // Filtering is not implemented yet; when it is, this distinguishes "nothing yet"
                 // from "nothing matches", which are different screens.
-                return ExpenseListUiState.Empty(hasActiveFilters = false, conflictedExpenseIds = conflictedIds)
+                return ExpenseListUiState.Empty(
+                    hasActiveFilters = false,
+                    conflictedExpenseIds = conflictedIds,
+                    syncStatus = syncStatus,
+                )
             }
 
             // The zone is still needed here, but only to know what "this month" is right now —
@@ -81,6 +101,7 @@ class ExpenseListViewModel
                 monthTotal = monthTotal.formatAsMoney(expenses.first().currency, locale),
                 pendingCount = expenses.count { it.syncState == SyncState.PENDING },
                 conflictedExpenseIds = conflictedIds,
+                syncStatus = syncStatus,
             )
         }
 
