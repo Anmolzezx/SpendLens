@@ -6,15 +6,28 @@ import com.spendlens.core.data.sync.SyncManager
 import com.spendlens.core.database.DatabaseTransactionRunner
 import com.spendlens.core.database.dao.ExpenseConflictDao
 import com.spendlens.core.database.dao.ExpenseDao
+import com.spendlens.core.database.entity.asDomainModel
 import com.spendlens.core.database.entity.asSyncedExpense
+import com.spendlens.core.model.ExpenseConflict
 import com.spendlens.core.model.SyncState
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import javax.inject.Inject
 
-/** The user's decision on an expense in `CONFLICT`. */
+/** Expenses in `CONFLICT`, and the user's decision on each. */
 interface ExpenseConflictRepository {
+    /** Both versions of [expenseId], or null once it is no longer in conflict — including right after a decision. */
+    fun observeConflict(expenseId: String): Flow<ExpenseConflict?>
+
+    /**
+     * Every expense waiting for a decision. Includes ones deleted on this device, which the expense
+     * list does not show — this is how they stay reachable.
+     */
+    fun observeConflictedExpenseIds(): Flow<List<String>>
+
     /**
      * Keep this device's version. It is re-based onto the server's, so the next sync uploads it as an
      * ordinary edit — one made after seeing the other side — and the server accepts it.
@@ -36,6 +49,24 @@ class OfflineFirstExpenseConflictRepository
         @param:Dispatcher(SpendLensDispatcher.IO)
         private val ioDispatcher: CoroutineDispatcher,
     ) : ExpenseConflictRepository {
+        override fun observeConflict(expenseId: String): Flow<ExpenseConflict?> =
+            combine(
+                expenseDao.observeExpenseIncludingDeleted(expenseId),
+                conflictDao.observeConflict(expenseId),
+            ) { local, remote ->
+                if (local == null || remote == null) {
+                    null
+                } else {
+                    ExpenseConflict(
+                        local = local.asDomainModel(),
+                        // The server never has a photo; the local one belongs to either version.
+                        remote = remote.asSyncedExpense(receiptImagePath = local.receiptImagePath).asDomainModel(),
+                    )
+                }
+            }
+
+        override fun observeConflictedExpenseIds(): Flow<List<String>> = conflictDao.observeConflictedExpenseIds()
+
         override suspend fun keepLocal(expenseId: String) =
             withContext(ioDispatcher) {
                 transaction {

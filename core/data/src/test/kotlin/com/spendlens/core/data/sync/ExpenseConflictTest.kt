@@ -1,8 +1,10 @@
 package com.spendlens.core.data.sync
 
 import com.spendlens.core.model.Expense
+import com.spendlens.core.model.ExpenseField
 import com.spendlens.core.model.SyncState
 import com.spendlens.core.testing.network.FakeSpendLensServer
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -132,6 +134,51 @@ class ExpenseConflictTest {
             assertEquals(111L, phone.stored("a")?.amountMinor)
             assertEquals(SyncState.CONFLICT, phone.stored("a")?.syncState)
             assertEquals(222L, phone.storedConflict("a")?.amountMinor)
+        }
+
+    // -- what the conflict screen sees ---------------------------------------------------------------
+
+    @Test
+    fun `a conflict is observed with both versions`() =
+        runTest {
+            conflictOnTablet(tabletReceipt = "receipts/a.jpg")
+
+            val conflict = tablet.conflicts.observeConflict("a").first()
+
+            assertEquals(900L, conflict?.local?.amountMinor)
+            assertEquals(700L, conflict?.remote?.amountMinor)
+            assertEquals(setOf(ExpenseField.AMOUNT), conflict?.differences)
+            // The photo is on this device whichever version is kept.
+            assertEquals("receipts/a.jpg", conflict?.remote?.receiptImagePath)
+            assertEquals(listOf("a"), tablet.conflicts.observeConflictedExpenseIds().first())
+        }
+
+    /** The list hides deleted expenses, so this conflict is reachable only through the conflict ids. */
+    @Test
+    fun `an expense deleted here but edited there is still observable`() =
+        runTest {
+            bothDevicesHave(expense("a"))
+            phone.edit("a") { it.copy(merchant = "Still wanted") }
+            tablet.expenses.delete("a")
+            phone.sync()
+            tablet.sync()
+
+            assertEquals(emptyList<Expense>(), tablet.expenses.observeExpenses().first())
+            assertEquals(listOf("a"), tablet.conflicts.observeConflictedExpenseIds().first())
+            val conflict = tablet.conflicts.observeConflict("a").first()
+            assertEquals(true, conflict?.local?.isDeleted)
+            assertEquals("Still wanted", conflict?.remote?.merchant)
+        }
+
+    @Test
+    fun `a decision clears the conflict for anyone observing it`() =
+        runTest {
+            conflictOnTablet()
+
+            tablet.conflicts.keepRemote("a")
+
+            assertNull(tablet.conflicts.observeConflict("a").first())
+            assertEquals(emptyList<String>(), tablet.conflicts.observeConflictedExpenseIds().first())
         }
 
     // -- resolution ---------------------------------------------------------------------------------

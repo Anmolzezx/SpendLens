@@ -49,6 +49,13 @@ interface ExpenseDao {
     suspend fun getExpense(id: String): ExpenseEntity?
 
     /**
+     * Tombstones included. For the conflict screen only: an expense deleted here and edited elsewhere
+     * is still one side of the conflict, and the user has to see it to choose.
+     */
+    @Query("SELECT * FROM expenses WHERE id = :id")
+    fun observeExpenseIncludingDeleted(id: String): Flow<ExpenseEntity?>
+
+    /**
      * Records that the server accepted an upload as [version].
      *
      * The row is marked `SYNCED` only if it is unchanged since it was read for upload — compared by
