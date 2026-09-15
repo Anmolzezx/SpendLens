@@ -15,8 +15,10 @@ dependencies {
     api(projects.core.model)
     implementation(projects.core.common)
     implementation(projects.core.database)
+    implementation(projects.core.network)
 
     testImplementation(projects.core.database)
+    testImplementation(projects.core.testing)
     testImplementation(libs.room.runtime)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

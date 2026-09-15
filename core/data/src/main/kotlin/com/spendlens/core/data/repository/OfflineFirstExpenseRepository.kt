@@ -2,6 +2,7 @@ package com.spendlens.core.data.repository
 
 import com.spendlens.core.common.di.Dispatcher
 import com.spendlens.core.common.di.SpendLensDispatcher
+import com.spendlens.core.database.DatabaseTransactionRunner
 import com.spendlens.core.database.dao.ExpenseDao
 import com.spendlens.core.database.entity.asDomainModel
 import com.spendlens.core.database.entity.asEntity
@@ -26,6 +27,7 @@ class OfflineFirstExpenseRepository
     @Inject
     constructor(
         private val expenseDao: ExpenseDao,
+        private val transaction: DatabaseTransactionRunner,
         private val clock: Clock,
         @param:Dispatcher(SpendLensDispatcher.IO)
         private val ioDispatcher: CoroutineDispatcher,
@@ -44,16 +46,33 @@ class OfflineFirstExpenseRepository
                     endDayExclusive = month.plusMonths(1).atDay(1).toEpochDay(),
                 ).map { entities -> entities.map { it.asDomainModel() } }
 
+        /**
+         * Sync bookkeeping comes from the stored row, never from the caller. The edit screen builds a
+         * fresh `Expense` from its form, so trusting its `remoteVersion` (null) would make every edit of
+         * a synced expense look to the server like a brand-new record colliding with an existing one.
+         *
+         * Read and write share a transaction, so a sync recording a newer version in between cannot be
+         * overwritten with the old one.
+         */
         override suspend fun upsert(expense: Expense) =
             withContext(ioDispatcher) {
-                expenseDao.upsert(
-                    expense
-                        .copy(
-                            // Any local write is unsynced by definition, whatever the caller passed.
-                            syncState = SyncState.PENDING,
-                            updatedAt = clock.instant(),
-                        ).asEntity(),
-                )
+                transaction {
+                    val stored = expenseDao.getExpense(expense.id)
+                    expenseDao.upsert(
+                        expense
+                            .copy(
+                                // A local write is unsynced by definition. A conflicted row stays
+                                // conflicted: the edit changes this device's side, it does not settle it.
+                                syncState = if (stored?.syncState == SyncState.CONFLICT) {
+                                    SyncState.CONFLICT
+                                } else {
+                                    SyncState.PENDING
+                                },
+                                updatedAt = clock.instant(),
+                                remoteVersion = stored?.remoteVersion,
+                            ).asEntity(),
+                    )
+                }
             }
 
         override suspend fun delete(id: String) =

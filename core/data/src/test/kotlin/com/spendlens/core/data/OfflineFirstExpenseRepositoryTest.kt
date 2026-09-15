@@ -3,7 +3,9 @@ package com.spendlens.core.data
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.spendlens.core.data.repository.OfflineFirstExpenseRepository
+import com.spendlens.core.database.RoomTransactionRunner
 import com.spendlens.core.database.SpendLensDatabase
+import com.spendlens.core.database.entity.asEntity
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.SyncState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,6 +48,7 @@ class OfflineFirstExpenseRepositoryTest {
             ).build()
         repository = OfflineFirstExpenseRepository(
             expenseDao = database.expenseDao(),
+            transaction = RoomTransactionRunner(database),
             // Fixed, so `updatedAt` is an exact expected value rather than "roughly now".
             clock = Clock.fixed(fixedNow, ZoneOffset.UTC),
             ioDispatcher = UnconfinedTestDispatcher(),
@@ -154,6 +157,34 @@ class OfflineFirstExpenseRepositoryTest {
                 .sorted()
 
             assertEquals(listOf("first", "last"), ids)
+        }
+
+    /**
+     * The edit screen builds a new `Expense` from its form and knows nothing about sync. If the
+     * repository trusted it, saving a synced expense would erase its version and the next upload
+     * would collide with its own history.
+     */
+    @Test
+    fun `upsert keeps the stored remote version when the caller passes none`() =
+        runTest {
+            val synced = expense(id = "a", syncState = SyncState.SYNCED).copy(remoteVersion = 9)
+            database.expenseDao().upsert(synced.asEntity())
+
+            repository.upsert(expense(id = "a", merchant = "Edited"))
+
+            val stored = database.expenseDao().getExpense("a")
+            assertEquals(9L, stored?.remoteVersion)
+            assertEquals(SyncState.PENDING, stored?.syncState)
+        }
+
+    @Test
+    fun `editing a conflicted expense keeps it in conflict`() =
+        runTest {
+            database.expenseDao().upsert(expense(id = "a", syncState = SyncState.CONFLICT).asEntity())
+
+            repository.upsert(expense(id = "a", merchant = "Edited"))
+
+            assertEquals(SyncState.CONFLICT, database.expenseDao().getExpense("a")?.syncState)
         }
 
     private fun expense(

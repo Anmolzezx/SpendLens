@@ -11,5 +11,6 @@ dependencies {
     // purpose: a test artifact cannot be consumed by another module's test compilation.
     api(projects.core.data)
     api(projects.core.model)
+    api(projects.core.network)
     api(libs.kotlinx.coroutines.test)
 }

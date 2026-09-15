@@ -17,8 +17,9 @@ import java.time.YearMonth
  * the ViewModel re-emits — which is the behaviour that matters and the one a mock cannot express.
  *
  * The semantics deliberately mirror the real implementation: reads exclude tombstones and sort
- * newest-first, and writes stamp `PENDING`. A fake that is more permissive than the real thing lets
- * tests pass against behaviour production does not have.
+ * newest-first, and writes stamp `PENDING` while keeping sync bookkeeping the caller does not own.
+ * A fake that is more permissive than the real thing lets tests pass against behaviour production
+ * does not have.
  */
 class TestExpenseRepository(
     initial: List<Expense> = emptyList(),
@@ -42,19 +43,28 @@ class TestExpenseRepository(
         backing.map { expenses -> expenses.visible().filter { it.occurredIn(month) } }
 
     override suspend fun upsert(expense: Expense) {
-        val stamped = expense.copy(syncState = SyncState.PENDING, updatedAt = now)
+        val stored = backing.value.firstOrNull { it.id == expense.id }
+        val stamped = expense.copy(
+            syncState = stored.nextSyncState(),
+            updatedAt = now,
+            remoteVersion = stored?.remoteVersion,
+        )
         backing.value = backing.value.filterNot { it.id == expense.id } + stamped
     }
 
     override suspend fun delete(id: String) {
         backing.value = backing.value.map { expense ->
             if (expense.id == id) {
-                expense.copy(isDeleted = true, syncState = SyncState.PENDING, updatedAt = now)
+                expense.copy(isDeleted = true, syncState = expense.nextSyncState(), updatedAt = now)
             } else {
                 expense
             }
         }
     }
+
+    /** As in the real repository: a local write makes a row pending, but never settles a conflict. */
+    private fun Expense?.nextSyncState() =
+        if (this?.syncState == SyncState.CONFLICT) SyncState.CONFLICT else SyncState.PENDING
 
     /** Same ordering as the DAO — newest day first, most recently edited first within a day. */
     private fun List<Expense>.visible() =
