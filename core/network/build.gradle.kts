@@ -1,5 +1,6 @@
 plugins {
     id("spendlens.android.library")
+    id("spendlens.android.hilt")
     alias(libs.plugins.kotlin.serialization)
 }
 
