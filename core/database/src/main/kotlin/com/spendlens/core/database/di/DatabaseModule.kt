@@ -2,11 +2,15 @@ package com.spendlens.core.database.di
 
 import android.content.Context
 import androidx.room.Room
+import com.spendlens.core.database.DatabaseTransactionRunner
+import com.spendlens.core.database.RoomTransactionRunner
 import com.spendlens.core.database.SeedCategoriesCallback
 import com.spendlens.core.database.SpendLensDatabase
 import com.spendlens.core.database.dao.BudgetDao
 import com.spendlens.core.database.dao.CategoryDao
+import com.spendlens.core.database.dao.ExpenseConflictDao
 import com.spendlens.core.database.dao.ExpenseDao
+import com.spendlens.core.database.dao.SyncCursorDao
 import com.spendlens.core.database.migration.addSpendLensMigrations
 import dagger.Module
 import dagger.Provides
@@ -45,6 +49,16 @@ object DatabaseModule {
 
     @Provides
     fun providesBudgetDao(database: SpendLensDatabase): BudgetDao = database.budgetDao()
+
+    @Provides
+    fun providesExpenseConflictDao(database: SpendLensDatabase): ExpenseConflictDao = database.expenseConflictDao()
+
+    @Provides
+    fun providesSyncCursorDao(database: SpendLensDatabase): SyncCursorDao = database.syncCursorDao()
+
+    @Provides
+    fun providesTransactionRunner(database: SpendLensDatabase): DatabaseTransactionRunner =
+        RoomTransactionRunner(database)
 
     private const val DATABASE_NAME = "spendlens.db"
 }

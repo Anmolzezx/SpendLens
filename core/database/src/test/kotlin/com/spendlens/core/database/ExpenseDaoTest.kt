@@ -130,8 +130,9 @@ class ExpenseDaoTest {
             assertNull(dao.observeExpense("a").first())
         }
 
+    /** A conflicted row is not re-uploaded: the server would refuse it again until the user decides. */
     @Test
-    fun `getPendingSync excludes synced rows`() =
+    fun `getPendingSync returns only pending rows, not synced or conflicted ones`() =
         runTest {
             dao.upsert(
                 listOf(
@@ -141,9 +142,52 @@ class ExpenseDaoTest {
                 ),
             )
 
-            val ids = dao.getPendingSync().map { it.id }.sorted()
+            assertEquals(listOf("pending"), dao.getPendingSync().map { it.id })
+        }
 
-            assertEquals(listOf("conflict", "pending"), ids)
+    @Test
+    fun `soft delete leaves a conflicted row in conflict`() =
+        runTest {
+            dao.upsert(expense(id = "a", syncState = SyncState.CONFLICT))
+
+            dao.softDelete(id = "a", updatedAt = 1_000L)
+
+            val stored = dao.getExpense("a")
+            assertEquals(true, stored?.isDeleted)
+            assertEquals(SyncState.CONFLICT, stored?.syncState)
+        }
+
+    @Test
+    fun `getExpense returns tombstones`() =
+        runTest {
+            dao.upsert(expense(id = "a", isDeleted = true))
+
+            assertEquals("a", dao.getExpense("a")?.id)
+        }
+
+    @Test
+    fun `markPushed marks an unchanged row synced at the server version`() =
+        runTest {
+            dao.upsert(expense(id = "a", syncState = SyncState.PENDING, updatedAt = 1_000L))
+
+            dao.markPushed(id = "a", version = 7, pushedUpdatedAt = Instant.ofEpochMilli(1_000L))
+
+            val stored = dao.getExpense("a")
+            assertEquals(SyncState.SYNCED, stored?.syncState)
+            assertEquals(7L, stored?.remoteVersion)
+        }
+
+    /** The user saved again while the upload was in flight; that newer edit still has to go up. */
+    @Test
+    fun `markPushed keeps a row edited since it was read pending, but records the version`() =
+        runTest {
+            dao.upsert(expense(id = "a", syncState = SyncState.PENDING, updatedAt = 2_000L))
+
+            dao.markPushed(id = "a", version = 7, pushedUpdatedAt = Instant.ofEpochMilli(1_000L))
+
+            val stored = dao.getExpense("a")
+            assertEquals(SyncState.PENDING, stored?.syncState)
+            assertEquals(7L, stored?.remoteVersion)
         }
 
     @Test

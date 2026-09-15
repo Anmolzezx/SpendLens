@@ -6,6 +6,7 @@ import androidx.room.Upsert
 import com.spendlens.core.database.entity.ExpenseEntity
 import com.spendlens.core.model.SyncState
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 @Dao
 interface ExpenseDao {
@@ -34,9 +35,43 @@ interface ExpenseDao {
         endDayExclusive: Long,
     ): Flow<List<ExpenseEntity>>
 
-    /** Tombstones included — the sync layer has to upload deletions too. */
-    @Query("SELECT * FROM expenses WHERE sync_state != :synced")
-    suspend fun getPendingSync(synced: SyncState = SyncState.SYNCED): List<ExpenseEntity>
+    /**
+     * Rows waiting to upload, tombstones included — deletions have to reach the server too.
+     *
+     * `PENDING` only. A `CONFLICT` row is not uploaded: the server has already refused it once, and
+     * sending it again would be refused again until the user decides which version to keep.
+     */
+    @Query("SELECT * FROM expenses WHERE sync_state = :pending")
+    suspend fun getPendingSync(pending: SyncState = SyncState.PENDING): List<ExpenseEntity>
+
+    /** Tombstones included, unlike every `observe` query: sync needs to know a row was deleted. */
+    @Query("SELECT * FROM expenses WHERE id = :id")
+    suspend fun getExpense(id: String): ExpenseEntity?
+
+    /**
+     * Records that the server accepted an upload as [version].
+     *
+     * The row is marked `SYNCED` only if it is unchanged since it was read for upload — compared by
+     * [pushedUpdatedAt]. If the user edited it while the request was in flight, it stays `PENDING`,
+     * but still takes the new version, so that edit uploads next time based on the version the server
+     * now has instead of being refused as a conflict with this device's own earlier change.
+     *
+     * One statement, so there is no window between checking the row and updating it.
+     */
+    @Query(
+        """
+        UPDATE expenses
+        SET remote_version = :version,
+            sync_state = CASE WHEN updated_at = :pushedUpdatedAt THEN :synced ELSE sync_state END
+        WHERE id = :id
+        """,
+    )
+    suspend fun markPushed(
+        id: String,
+        version: Long,
+        pushedUpdatedAt: Instant,
+        synced: SyncState = SyncState.SYNCED,
+    )
 
     /**
      * `@Upsert`, not `@Insert` + `@Update`. Writes arrive from two directions — the user editing a
@@ -52,12 +87,24 @@ interface ExpenseDao {
     /**
      * Soft delete. A hard delete cannot be synced: the other device has no way to tell "deleted"
      * from "never seen", and the row resurrects on the next pull.
+     *
+     * A row already in `CONFLICT` stays there — deleting it changes this device's side of the
+     * conflict, it does not settle it.
      */
-    @Query("UPDATE expenses SET is_deleted = 1, sync_state = :pending, updated_at = :updatedAt WHERE id = :id")
+    @Query(
+        """
+        UPDATE expenses
+        SET is_deleted = 1,
+            updated_at = :updatedAt,
+            sync_state = CASE WHEN sync_state = :conflict THEN sync_state ELSE :pending END
+        WHERE id = :id
+        """,
+    )
     suspend fun softDelete(
         id: String,
         updatedAt: Long,
         pending: SyncState = SyncState.PENDING,
+        conflict: SyncState = SyncState.CONFLICT,
     )
 
     /** Hard delete, for purging synced tombstones. Not reachable from the UI. */

@@ -4,6 +4,8 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.spendlens.core.database.entity.BudgetEntity
+import com.spendlens.core.database.entity.ExpenseConflictEntity
+import com.spendlens.core.database.entity.SyncCursorEntity
 import com.spendlens.core.database.migration.addSpendLensMigrations
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -59,7 +61,7 @@ class MigrationTest {
     @Test
     fun `upgrading from version 1 preserves expenses`() =
         runTest {
-            createDatabaseAt(version = 1) { insertExpense(occurredAtMillis = 1_000) }
+            createDatabaseAt(version = 1) { insertExpense(occurredAt = 1_000) }
 
             val expense = openWithRoom(UTC)
                 .expenseDao()
@@ -123,7 +125,7 @@ class MigrationTest {
 
             // Separate files: reusing one path while the first connection is still open is how a test
             // ends up waiting on a SQLite lock instead of failing.
-            createDatabaseAt(version = 2) { insertExpense(occurredAtMillis = lateOn31stUtc) }
+            createDatabaseAt(version = 2) { insertExpense(occurredAt = lateOn31stUtc) }
             val inKolkata = openWithRoom(ZoneId.of("Asia/Kolkata"))
                 .expenseDao()
                 .observeExpenses()
@@ -132,7 +134,7 @@ class MigrationTest {
             assertEquals(LocalDate.of(2026, 9, 1), inKolkata.occurredOn)
 
             databaseFile = newDatabaseFile()
-            createDatabaseAt(version = 2) { insertExpense(occurredAtMillis = lateOn31stUtc) }
+            createDatabaseAt(version = 2) { insertExpense(occurredAt = lateOn31stUtc) }
             val inUtc = openWithRoom(UTC)
                 .expenseDao()
                 .observeExpenses()
@@ -144,7 +146,7 @@ class MigrationTest {
     @Test
     fun `migration 3 adds remote_version as null on existing rows`() =
         runTest {
-            createDatabaseAt(version = 2) { insertExpense(occurredAtMillis = 1_000) }
+            createDatabaseAt(version = 2) { insertExpense(occurredAt = 1_000) }
 
             assertNull(
                 openWithRoom(UTC)
@@ -154,6 +156,37 @@ class MigrationTest {
                     .single()
                     .remoteVersion,
             )
+        }
+
+    // -- 3 → 4 --------------------------------------------------------------------------------------
+
+    @Test
+    fun `upgrading from version 3 keeps expenses and adds usable sync tables`() =
+        runTest {
+            createDatabaseAt(version = 3) {
+                insertExpense(occurredAt = LocalDate.of(2026, 9, 15).toEpochDay())
+            }
+            val database = openWithRoom(UTC)
+
+            database.syncCursorDao().upsert(SyncCursorEntity(stream = "expenses", cursor = 41))
+            database.expenseConflictDao().upsert(
+                ExpenseConflictEntity(
+                    expenseId = "a",
+                    merchant = "Trader Joe's",
+                    amountMinor = 5_000,
+                    currency = "USD",
+                    occurredOn = LocalDate.of(2026, 9, 15),
+                    categoryId = "cat-groceries",
+                    note = null,
+                    updatedAt = Instant.EPOCH,
+                    isDeleted = false,
+                    serverVersion = 41,
+                ),
+            )
+
+            assertEquals(LocalDate.of(2026, 9, 15), database.expenseDao().getExpense("a")?.occurredOn)
+            assertEquals(41L, database.syncCursorDao().getCursor("expenses"))
+            assertEquals(5_000L, database.expenseConflictDao().getConflict("a")?.amountMinor)
         }
 
     // -- helpers ------------------------------------------------------------------------------------
@@ -188,14 +221,17 @@ class MigrationTest {
         }
     }
 
-    /** Pre-v3 row: `occurred_at` is epoch milliseconds and there is no `remote_version` column. */
-    private fun SQLiteDatabase.insertExpense(occurredAtMillis: Long) {
+    /**
+     * A row in the columns every version from 1 has. Before v3 `occurred_at` holds epoch milliseconds;
+     * a v3 caller passes an epoch day. `remote_version` is left to its default.
+     */
+    private fun SQLiteDatabase.insertExpense(occurredAt: Long) {
         execSQL(
             """
             INSERT INTO expenses
             (id, merchant, amount_minor, currency, occurred_at, category_id, note,
              receipt_image_path, sync_state, updated_at, is_deleted)
-            VALUES ('a', 'Trader Joe''s', 4287, 'USD', $occurredAtMillis, 'cat-groceries', NULL,
+            VALUES ('a', 'Trader Joe''s', 4287, 'USD', $occurredAt, 'cat-groceries', NULL,
                     NULL, 'SYNCED', 1000, 0)
             """.trimIndent(),
         )
