@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import com.spendlens.R
 import com.spendlens.feature.expenses.navigation.ExpensesGraph
 import com.spendlens.feature.insights.navigation.InsightsGraph
+import com.spendlens.feature.settings.navigation.SettingsGraph
 import kotlin.reflect.KClass
 
 /**
@@ -20,4 +21,5 @@ enum class TopLevelDestination(
 ) {
     EXPENSES(R.string.nav_expenses, ExpensesGraph::class),
     INSIGHTS(R.string.nav_insights, InsightsGraph::class),
+    SETTINGS(R.string.nav_settings, SettingsGraph::class),
 }

@@ -33,8 +33,8 @@ fun SpendLensApp(
                         NavigationBarItem(
                             selected = destination == currentTopLevel,
                             onClick = { appState.navigateTo(destination) },
-                            // No icons yet — labels alone are unambiguous with two tabs, and a wrong
-                            // icon is worse than none. Icons land with the settings tab.
+                            // Labels only. Three short words are unambiguous, and an icon that
+                            // does not mean the same thing to everyone is worse than none.
                             icon = { Text(stringResource(destination.labelRes)) },
                         )
                     }

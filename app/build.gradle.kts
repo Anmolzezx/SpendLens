@@ -34,6 +34,8 @@ dependencies {
     implementation(projects.feature.capture)
     implementation(projects.feature.expenses)
     implementation(projects.feature.insights)
+    implementation(projects.feature.settings)
+    implementation(projects.core.applock)
     implementation(projects.sync)
 
     // The Application supplies WorkManager's configuration, with Hilt's worker factory.
@@ -49,6 +51,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    // App lock: foreground/background for the whole process, and lifecycle-aware state in the activity.
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

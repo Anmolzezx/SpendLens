@@ -11,6 +11,7 @@ import com.spendlens.feature.expenses.navigation.ExpenseEditRoute
 import com.spendlens.feature.expenses.navigation.ExpensesGraph
 import com.spendlens.feature.expenses.navigation.expensesGraph
 import com.spendlens.feature.insights.navigation.insightsGraph
+import com.spendlens.feature.settings.navigation.settingsGraph
 
 /**
  * The one place that knows about every feature.
@@ -60,5 +61,6 @@ fun SpendLensNavHost(
             onCancel = { navController.popBackStack() },
         )
         insightsGraph()
+        settingsGraph()
     }
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_app_lock">App lock</string>
+    <string name="settings_app_lock_description">Ask for your fingerprint, face or screen lock when you open SpendLens</string>
+    <string name="settings_app_lock_unavailable">Set up a screen lock in your phone\'s settings to use app lock</string>
+</resources>

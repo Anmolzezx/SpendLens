@@ -2,12 +2,14 @@ package com.spendlens.core.data.di
 
 import com.spendlens.core.data.repository.BudgetRepository
 import com.spendlens.core.data.repository.CategoryRepository
+import com.spendlens.core.data.repository.DataStoreUserPreferencesRepository
 import com.spendlens.core.data.repository.ExpenseConflictRepository
 import com.spendlens.core.data.repository.ExpenseRepository
 import com.spendlens.core.data.repository.OfflineFirstBudgetRepository
 import com.spendlens.core.data.repository.OfflineFirstCategoryRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseConflictRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseRepository
+import com.spendlens.core.data.repository.UserPreferencesRepository
 import com.spendlens.core.data.sync.ExpenseSynchronizer
 import com.spendlens.core.data.sync.OfflineFirstSyncStatusRepository
 import com.spendlens.core.data.sync.SyncStatusRepository
@@ -49,4 +51,7 @@ internal abstract class DataModule {
 
     @Binds
     abstract fun bindsSyncStatusRepository(impl: OfflineFirstSyncStatusRepository): SyncStatusRepository
+
+    @Binds
+    abstract fun bindsUserPreferencesRepository(impl: DataStoreUserPreferencesRepository): UserPreferencesRepository
 }

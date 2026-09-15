@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.spendlens.feature.expenses.navigation.navigateToExpenses
 import com.spendlens.feature.insights.navigation.navigateToInsights
+import com.spendlens.feature.settings.navigation.navigateToSettings
 
 @Stable
 class SpendLensAppState(
@@ -46,6 +47,7 @@ class SpendLensAppState(
         when (destination) {
             TopLevelDestination.EXPENSES -> navController.navigateToExpenses(options)
             TopLevelDestination.INSIGHTS -> navController.navigateToInsights(options)
+            TopLevelDestination.SETTINGS -> navController.navigateToSettings(options)
         }
     }
 }
