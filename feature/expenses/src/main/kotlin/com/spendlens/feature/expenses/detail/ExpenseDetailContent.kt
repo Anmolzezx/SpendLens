@@ -47,6 +47,7 @@ internal fun ExpenseDetailContent(
     uiState: ExpenseDetailUiState,
     onBack: () -> Unit,
     onEditClick: (String) -> Unit,
+    onReviewConflictClick: (String) -> Unit,
     onDeleteClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -84,6 +85,7 @@ internal fun ExpenseDetailContent(
             is ExpenseDetailUiState.Success -> ExpenseDetail(
                 expense = uiState.expense,
                 onEditClick = onEditClick,
+                onReviewConflictClick = onReviewConflictClick,
                 onDeleteClick = onDeleteClick,
                 modifier = Modifier
                     .fillMaxSize()
@@ -97,6 +99,7 @@ internal fun ExpenseDetailContent(
 private fun ExpenseDetail(
     expense: ExpenseDetailUiModel,
     onEditClick: (String) -> Unit,
+    onReviewConflictClick: (String) -> Unit,
     onDeleteClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -121,6 +124,10 @@ private fun ExpenseDetail(
             expense.syncState.badge()?.let { (label, tone) ->
                 StatusBadge(label = label, tone = tone)
             }
+        }
+
+        if (expense.syncState == SyncState.CONFLICT) {
+            ConflictNotice(onReview = { onReviewConflictClick(expense.id) })
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -224,6 +231,33 @@ private fun ReceiptImage(
     )
 }
 
+/** Says what the Conflict badge means and leads to the decision, instead of leaving the badge a riddle. */
+@Composable
+private fun ConflictNotice(
+    onReview: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(
+            modifier = Modifier.padding(Spacing.Medium),
+            verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall),
+        ) {
+            Text(
+                text = stringResource(R.string.expense_detail_conflict_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(onClick = onReview) {
+                Text(stringResource(R.string.expenses_conflict_review))
+            }
+        }
+    }
+}
+
 @Composable
 private fun DetailRow(
     label: String,
@@ -267,6 +301,7 @@ private fun ExpenseDetailSuccessPreview() {
                 uiState = ExpenseDetailPreviewData.withReceiptAndNote,
                 onBack = {},
                 onEditClick = {},
+                onReviewConflictClick = {},
                 onDeleteClick = {},
             )
         }
@@ -283,6 +318,7 @@ private fun ExpenseDetailMinimalPreview() {
                 uiState = ExpenseDetailPreviewData.minimal,
                 onBack = {},
                 onEditClick = {},
+                onReviewConflictClick = {},
                 onDeleteClick = {},
             )
         }
@@ -298,6 +334,7 @@ private fun ExpenseDetailNotFoundPreview() {
                 uiState = ExpenseDetailUiState.NotFound,
                 onBack = {},
                 onEditClick = {},
+                onReviewConflictClick = {},
                 onDeleteClick = {},
             )
         }

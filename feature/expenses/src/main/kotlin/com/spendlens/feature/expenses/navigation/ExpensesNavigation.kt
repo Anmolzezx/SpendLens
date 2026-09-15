@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import com.spendlens.feature.expenses.conflict.ExpenseConflictScreen
 import com.spendlens.feature.expenses.detail.ExpenseDetailScreen
 import com.spendlens.feature.expenses.edit.ExpenseEditScreen
 import com.spendlens.feature.expenses.list.ExpenseListScreen
@@ -22,6 +23,12 @@ data object ExpenseListRoute
 
 @Serializable
 data class ExpenseDetailRoute(
+    val expenseId: String,
+)
+
+/** Both versions of a conflicted expense, and the choice between them. */
+@Serializable
+data class ExpenseConflictRoute(
     val expenseId: String,
 )
 
@@ -62,6 +69,7 @@ fun NavGraphBuilder.expensesGraph(
         composable<ExpenseListRoute> {
             ExpenseListScreen(
                 onExpenseClick = { id -> navController.navigate(ExpenseDetailRoute(id)) },
+                onReviewConflictClick = { id -> navController.navigate(ExpenseConflictRoute(id)) },
                 onAddExpenseClick = { navController.navigate(ExpenseEditRoute()) },
                 // The one genuinely cross-feature edge, and the only one handed upward.
                 onScanReceiptClick = onNavigateToCapture,
@@ -73,6 +81,15 @@ fun NavGraphBuilder.expensesGraph(
             ExpenseDetailScreen(
                 onBack = { navController.popBackStack() },
                 onEditClick = { id -> navController.navigate(ExpenseEditRoute(id)) },
+                onReviewConflictClick = { id -> navController.navigate(ExpenseConflictRoute(id)) },
+            )
+        }
+        composable<ExpenseConflictRoute> {
+            ExpenseConflictScreen(
+                onBack = { navController.popBackStack() },
+                // Back to wherever "Review" was tapped. The detail screen observes the expense, so it
+                // already shows whichever version was kept.
+                onResolved = { navController.popBackStack() },
             )
         }
         composable<ExpenseEditRoute> {

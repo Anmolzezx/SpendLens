@@ -1,6 +1,7 @@
 package com.spendlens.feature.expenses.list
 
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * A sealed interface rather than a single class with nullable fields: `when` becomes exhaustive, and
@@ -16,12 +17,19 @@ sealed interface ExpenseListUiState {
      */
     data class Empty(
         val hasActiveFilters: Boolean,
+        /**
+         * Conflicts can exist with no visible expenses: an expense deleted here but edited on another
+         * device is hidden from the list, yet still waits for a decision.
+         */
+        val conflictedExpenseIds: ImmutableList<String> = persistentListOf(),
     ) : ExpenseListUiState
 
     data class Success(
         val expenses: ImmutableList<ExpenseUiModel>,
         val monthTotal: String,
+        /** Waiting to upload. Conflicts are not counted here; they need the user, not the network. */
         val pendingCount: Int,
+        val conflictedExpenseIds: ImmutableList<String> = persistentListOf(),
     ) : ExpenseListUiState
 
     data class Error(

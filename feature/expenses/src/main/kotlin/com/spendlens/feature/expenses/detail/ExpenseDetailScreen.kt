@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun ExpenseDetailScreen(
     onBack: () -> Unit,
     onEditClick: (String) -> Unit,
+    onReviewConflictClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ExpenseDetailViewModel = hiltViewModel(),
 ) {
@@ -27,6 +28,7 @@ fun ExpenseDetailScreen(
         uiState = uiState,
         onBack = onBack,
         onEditClick = onEditClick,
+        onReviewConflictClick = onReviewConflictClick,
         onDeleteClick = {
             viewModel.delete()
             onBack()

@@ -5,8 +5,11 @@ import com.spendlens.core.data.repository.CategoryRepository
 import com.spendlens.core.model.Category
 import com.spendlens.core.model.DefaultCategories
 import com.spendlens.core.model.Expense
+import com.spendlens.core.model.ExpenseConflict
 import com.spendlens.core.model.SyncState
+import com.spendlens.core.testing.repository.TestExpenseConflictRepository
 import com.spendlens.core.testing.repository.TestExpenseRepository
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -101,21 +104,45 @@ class ExpenseListViewModelTest {
             }
         }
 
+    /** A conflict needs the user, not the network, so it is not "not synced" — it has its own notice. */
     @Test
-    fun `counts unsynced expenses`() =
+    fun `counts pending uploads and conflicts separately`() =
         runTest {
+            val conflicted = expense(id = "c", syncState = SyncState.CONFLICT)
             val repository = TestExpenseRepository(
                 listOf(
                     expense(id = "a", syncState = SyncState.SYNCED),
                     expense(id = "b", syncState = SyncState.PENDING),
-                    expense(id = "c", syncState = SyncState.CONFLICT),
+                    conflicted,
                 ),
             )
-            val viewModel = viewModel(repository)
+            val conflicts =
+                TestExpenseConflictRepository(listOf(ExpenseConflict(conflicted, conflicted.copy(amountMinor = 1))))
+            val viewModel = viewModel(repository, conflicts)
 
             viewModel.uiState.test {
                 awaitItem()
-                assertEquals(2, (awaitItem() as ExpenseListUiState.Success).pendingCount)
+                val state = awaitItem() as ExpenseListUiState.Success
+                assertEquals(1, state.pendingCount)
+                assertEquals(listOf("c"), state.conflictedExpenseIds)
+            }
+        }
+
+    /** Deleted here, edited elsewhere: no row to tap, so the notice is the only way to reach it. */
+    @Test
+    fun `offers conflicts even when no expense is visible`() =
+        runTest {
+            val deleted = expense(id = "gone", syncState = SyncState.CONFLICT).copy(isDeleted = true)
+            val conflicts =
+                TestExpenseConflictRepository(listOf(ExpenseConflict(deleted, deleted.copy(isDeleted = false))))
+            val viewModel = viewModel(TestExpenseRepository(listOf(deleted)), conflicts)
+
+            viewModel.uiState.test {
+                awaitItem()
+                assertEquals(
+                    ExpenseListUiState.Empty(hasActiveFilters = false, conflictedExpenseIds = persistentListOf("gone")),
+                    awaitItem(),
+                )
             }
         }
 
@@ -157,14 +184,17 @@ class ExpenseListViewModelTest {
             assertTrue("tombstone kept for sync", repository.current.single { it.id == "a" }.isDeleted)
         }
 
-    private fun viewModel(repository: TestExpenseRepository) =
-        ExpenseListViewModel(
-            expenseRepository = repository,
-            categoryRepository = FakeCategoryRepository(DefaultCategories.all),
-            clock = Clock.fixed(fixedNow, utc),
-            zoneId = utc,
-            locale = Locale.US,
-        )
+    private fun viewModel(
+        repository: TestExpenseRepository,
+        conflicts: TestExpenseConflictRepository = TestExpenseConflictRepository(),
+    ) = ExpenseListViewModel(
+        expenseRepository = repository,
+        categoryRepository = FakeCategoryRepository(DefaultCategories.all),
+        conflictRepository = conflicts,
+        clock = Clock.fixed(fixedNow, utc),
+        zoneId = utc,
+        locale = Locale.US,
+    )
 
     private fun expense(
         id: String,

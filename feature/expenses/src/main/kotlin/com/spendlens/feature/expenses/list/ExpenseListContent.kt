@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -48,6 +50,7 @@ import com.spendlens.feature.expenses.R
 internal fun ExpenseListContent(
     uiState: ExpenseListUiState,
     onExpenseClick: (String) -> Unit,
+    onReviewConflictClick: (String) -> Unit,
     onAddExpenseClick: () -> Unit,
     onScanReceiptClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -78,29 +81,37 @@ internal fun ExpenseListContent(
         when (uiState) {
             ExpenseListUiState.Loading -> LoadingState(Modifier.padding(padding))
 
-            is ExpenseListUiState.Empty -> EmptyState(
-                title = stringResource(
-                    if (uiState.hasActiveFilters) {
-                        R.string.expenses_empty_filtered_title
-                    } else {
-                        R.string.expenses_empty_title
-                    },
-                ),
-                description = stringResource(
-                    if (uiState.hasActiveFilters) {
-                        R.string.expenses_empty_filtered_description
-                    } else {
-                        R.string.expenses_empty_description
-                    },
-                ),
-                modifier = Modifier.padding(padding),
-                // Filtered-empty offers no action: the user has data, they just narrowed past it.
-                actionLabel = stringResource(R.string.expenses_empty_action)
-                    .takeUnless { uiState.hasActiveFilters },
-                // The empty state leads with the camera — it is the app's whole point, and a
-                // first-run user has nothing to type yet. The FAB stays on manual entry.
-                onAction = onScanReceiptClick.takeUnless { uiState.hasActiveFilters },
-            )
+            is ExpenseListUiState.Empty -> Column(Modifier.padding(padding)) {
+                if (uiState.conflictedExpenseIds.isNotEmpty()) {
+                    ConflictNotice(
+                        count = uiState.conflictedExpenseIds.size,
+                        onReview = { onReviewConflictClick(uiState.conflictedExpenseIds.first()) },
+                    )
+                }
+                EmptyState(
+                    title = stringResource(
+                        if (uiState.hasActiveFilters) {
+                            R.string.expenses_empty_filtered_title
+                        } else {
+                            R.string.expenses_empty_title
+                        },
+                    ),
+                    description = stringResource(
+                        if (uiState.hasActiveFilters) {
+                            R.string.expenses_empty_filtered_description
+                        } else {
+                            R.string.expenses_empty_description
+                        },
+                    ),
+                    modifier = Modifier.weight(1f),
+                    // Filtered-empty offers no action: the user has data, they just narrowed past it.
+                    actionLabel = stringResource(R.string.expenses_empty_action)
+                        .takeUnless { uiState.hasActiveFilters },
+                    // The empty state leads with the camera — it is the app's whole point, and a
+                    // first-run user has nothing to type yet. The FAB stays on manual entry.
+                    onAction = onScanReceiptClick.takeUnless { uiState.hasActiveFilters },
+                )
+            }
 
             is ExpenseListUiState.Error -> EmptyState(
                 title = stringResource(R.string.expenses_error_title),
@@ -121,6 +132,15 @@ internal fun ExpenseListContent(
                 ),
             ) {
                 item { MonthSummary(uiState) }
+                if (uiState.conflictedExpenseIds.isNotEmpty()) {
+                    item {
+                        ConflictNotice(
+                            count = uiState.conflictedExpenseIds.size,
+                            // One at a time: each decision returns here, and the next one is offered.
+                            onReview = { onReviewConflictClick(uiState.conflictedExpenseIds.first()) },
+                        )
+                    }
+                }
                 items(
                     items = uiState.expenses,
                     // Stable keys — required for correct item animations and scroll restoration.
@@ -172,6 +192,40 @@ private fun MonthSummary(
     }
 }
 
+/**
+ * Expenses waiting for a keep-this-or-that decision. Above the rows rather than only on them, because
+ * a conflicted deletion has no row to put a badge on.
+ */
+@Composable
+private fun ConflictNotice(
+    count: Int,
+    onReview: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.Large, vertical = Spacing.Small),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Row(
+            modifier = Modifier.padding(start = Spacing.Medium),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StatusBadge(
+                label = pluralStringResource(R.plurals.expenses_conflict_count, count, count),
+                tone = Tone.CRITICAL,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = onReview) {
+                Text(stringResource(R.string.expenses_conflict_review))
+            }
+        }
+    }
+}
+
 /** FAB height (56dp) plus its 16dp margins, so the last row can scroll clear of it. */
 private val FabClearance = 88.dp
 
@@ -199,6 +253,7 @@ private fun ExpenseListSuccessPreview() {
             ExpenseListContent(
                 uiState = ExpenseListPreviewData.success,
                 onExpenseClick = {},
+                onReviewConflictClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -214,6 +269,7 @@ private fun ExpenseListEmptyPreview() {
             ExpenseListContent(
                 uiState = ExpenseListUiState.Empty(hasActiveFilters = false),
                 onExpenseClick = {},
+                onReviewConflictClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -229,6 +285,7 @@ private fun ExpenseListFilteredEmptyPreview() {
             ExpenseListContent(
                 uiState = ExpenseListUiState.Empty(hasActiveFilters = true),
                 onExpenseClick = {},
+                onReviewConflictClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -244,6 +301,7 @@ private fun ExpenseListLoadingPreview() {
             ExpenseListContent(
                 uiState = ExpenseListUiState.Loading,
                 onExpenseClick = {},
+                onReviewConflictClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )
@@ -259,6 +317,7 @@ private fun ExpenseListErrorPreview() {
             ExpenseListContent(
                 uiState = ExpenseListUiState.Error("No connection, and nothing cached yet."),
                 onExpenseClick = {},
+                onReviewConflictClick = {},
                 onAddExpenseClick = {},
                 onScanReceiptClick = {},
             )

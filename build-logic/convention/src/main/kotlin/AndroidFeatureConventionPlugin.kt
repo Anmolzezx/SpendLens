@@ -45,6 +45,11 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 "testImplementation"(project(":core:testing"))
                 "testImplementation"(libs.findLibrary("kotlinx-coroutines-test").get())
                 "testImplementation"(libs.findLibrary("turbine").get())
+                // For ViewModels that read typed routes: SavedStateHandle.toRoute() builds a Bundle, which
+                // the plain JVM cannot. Only those test classes opt in with @RunWith(RobolectricTestRunner);
+                // the rest stay plain, fast JVM tests.
+                "testImplementation"(libs.findLibrary("robolectric").get())
+                "testImplementation"(libs.findLibrary("androidx-test-core").get())
             }
         }
     }

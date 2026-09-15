@@ -17,6 +17,12 @@
         <item quantity="other">%d not synced</item>
     </plurals>
 
+    <plurals name="expenses_conflict_count">
+        <item quantity="one">%d expense was changed on two devices</item>
+        <item quantity="other">%d expenses were changed on two devices</item>
+    </plurals>
+    <string name="expenses_conflict_review">Review</string>
+
     <string name="expenses_empty_title">No expenses yet</string>
     <string name="expenses_empty_description">Scan a receipt or add one by hand — everything works offline.</string>
     <string name="expenses_empty_action">Scan a receipt</string>
@@ -39,6 +45,18 @@
     <string name="expense_detail_delete">Delete</string>
     <string name="expense_detail_not_found_title">Expense not found</string>
     <string name="expense_detail_not_found_description">It may have been deleted on another device.</string>
+    <string name="expense_detail_conflict_message">This expense was also changed on another device.</string>
+
+    <string name="expense_conflict_title">Choose a version</string>
+    <string name="expense_conflict_explanation">This expense was changed here and on another device before they synced. Keep one version. The other will be discarded on every device.</string>
+    <string name="expense_conflict_this_device">This device</string>
+    <string name="expense_conflict_other_device">Other device</string>
+    <string name="expense_conflict_edited_at">Changed %1$s</string>
+    <string name="expense_conflict_different">Different</string>
+    <string name="expense_conflict_no_note">No note</string>
+    <string name="expense_conflict_deleted">Deleted</string>
+    <string name="expense_conflict_deleted_description">Keeping this version deletes the expense.</string>
+    <string name="expense_conflict_keep">Keep this version</string>
 
     <string name="expense_edit_title_new">New expense</string>
     <string name="expense_edit_title_edit">Edit expense</string>

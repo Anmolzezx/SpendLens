@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun ExpenseListScreen(
     onExpenseClick: (String) -> Unit,
+    onReviewConflictClick: (String) -> Unit,
     onAddExpenseClick: () -> Unit,
     onScanReceiptClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -27,6 +28,7 @@ fun ExpenseListScreen(
     ExpenseListContent(
         uiState = uiState,
         onExpenseClick = onExpenseClick,
+        onReviewConflictClick = onReviewConflictClick,
         onAddExpenseClick = onAddExpenseClick,
         onScanReceiptClick = onScanReceiptClick,
         modifier = modifier,
