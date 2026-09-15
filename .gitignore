@@ -32,3 +32,6 @@ bin/
 
 # Local session notes — kept out of the published repo
 docs/
+
+# The sync server's local database (./gradlew :server:run)
+server/spendlens-server.db*

@@ -1,4 +1,4 @@
-package com.spendlens.core.network.model
+package com.spendlens.core.protocol
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

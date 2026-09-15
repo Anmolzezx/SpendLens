@@ -13,4 +13,6 @@ dependencies {
     api(projects.core.model)
     api(projects.core.network)
     api(libs.kotlinx.coroutines.test)
+    // SyncProtocolContract is a JUnit suite that other modules subclass.
+    api(libs.junit)
 }

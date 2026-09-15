@@ -23,8 +23,10 @@ complexity:
 
 naming:
   FunctionNaming:
-    # @Composable functions are PascalCase — the Compose convention, not a violation.
-    ignoreAnnotated: [ 'Composable' ]
+    # @Composable functions are PascalCase — the Compose convention, not a violation. Test names are
+    # backticked sentences; the rule already skips test directories, but a shared suite such as
+    # core:testing's SyncProtocolContract lives in a main source set.
+    ignoreAnnotated: [ 'Composable', 'Test' ]
 
 style:
   MagicNumber:

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android refuses cleartext HTTP by default, and release builds keep that default. Debug builds allow
+    it for exactly two hosts: localhost, forwarded to the development machine by `adb reverse`, and
+    10.0.2.2, the emulator's own alias for it. Everything else still requires HTTPS.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

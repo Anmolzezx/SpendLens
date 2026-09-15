@@ -1,10 +1,10 @@
 package com.spendlens.core.testing.network
 
 import com.spendlens.core.network.SpendLensNetworkDataSource
-import com.spendlens.core.network.model.NetworkChangePage
-import com.spendlens.core.network.model.NetworkExpense
-import com.spendlens.core.network.model.NetworkPushRequest
-import com.spendlens.core.network.model.NetworkPushResult
+import com.spendlens.core.protocol.NetworkChangePage
+import com.spendlens.core.protocol.NetworkExpense
+import com.spendlens.core.protocol.NetworkPushRequest
+import com.spendlens.core.protocol.NetworkPushResult
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException

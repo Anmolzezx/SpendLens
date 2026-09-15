@@ -1,7 +1,7 @@
 package com.spendlens.core.data.sync
 
 import com.spendlens.core.model.SyncState
-import com.spendlens.core.network.model.NetworkExpense
+import com.spendlens.core.protocol.NetworkExpense
 import com.spendlens.core.testing.network.FakeSpendLensServer
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers

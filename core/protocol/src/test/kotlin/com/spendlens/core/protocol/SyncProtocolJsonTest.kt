@@ -1,8 +1,5 @@
-package com.spendlens.core.network
+package com.spendlens.core.protocol
 
-import com.spendlens.core.network.model.NetworkExpense
-import com.spendlens.core.network.model.NetworkPushRequest
-import com.spendlens.core.network.model.NetworkPushResult
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals

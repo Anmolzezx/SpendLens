@@ -1,8 +1,8 @@
 package com.spendlens.core.network
 
-import com.spendlens.core.network.model.NetworkChangePage
-import com.spendlens.core.network.model.NetworkPushRequest
-import com.spendlens.core.network.model.NetworkPushResult
+import com.spendlens.core.protocol.NetworkChangePage
+import com.spendlens.core.protocol.NetworkPushRequest
+import com.spendlens.core.protocol.NetworkPushResult
 
 /**
  * The sync protocol. Any backend — Retrofit to a real server, or the in-memory fake the tests share

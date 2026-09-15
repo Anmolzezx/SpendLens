@@ -3,7 +3,7 @@ package com.spendlens.core.data.sync
 import com.spendlens.core.database.entity.ExpenseConflictEntity
 import com.spendlens.core.database.entity.ExpenseEntity
 import com.spendlens.core.model.SyncState
-import com.spendlens.core.network.model.NetworkExpense
+import com.spendlens.core.protocol.NetworkExpense
 import java.time.Instant
 import java.time.LocalDate
 
