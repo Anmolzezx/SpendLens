@@ -3,8 +3,14 @@ package com.spendlens.core.data.sync
 import com.spendlens.core.model.SyncState
 import com.spendlens.core.network.model.NetworkExpense
 import com.spendlens.core.testing.network.FakeSpendLensServer
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -116,6 +122,35 @@ class ExpenseSynchronizerTest {
             assertEquals(SyncReport(pushed = 1), phone.sync())
         }
 
+    /**
+     * The periodic sync and a sync requested by a save are separate background jobs and can start
+     * together. Interleaved, the second would pull — and later write its cursor — mid-way through the
+     * first's upload.
+     */
+    @Test
+    fun `overlapping syncs run one after the other`() =
+        runTest {
+            phone.expenses.upsert(expense("a"))
+            val firstIsUploading = CompletableDeferred<Unit>()
+            val letFirstFinish = CompletableDeferred<Unit>()
+            server.beforePushResponse = {
+                server.beforePushResponse = {}
+                firstIsUploading.complete(Unit)
+                letFirstFinish.await()
+            }
+
+            val first = launch { phone.sync() }
+            firstIsUploading.await()
+            val second = launch { phone.sync() }
+            // Real time, not virtual: the second sync runs on database threads the test cannot advance.
+            withContext(Dispatchers.Default) { delay(OVERLAP_WINDOW_MS) }
+
+            assertTrue("A second sync pulled while the first was uploading", server.pullCursors.isEmpty())
+            letFirstFinish.complete(Unit)
+            joinAll(first, second)
+            assertEquals(2, server.pullCursors.size)
+        }
+
     // -- download -----------------------------------------------------------------------------------
 
     @Test
@@ -199,6 +234,11 @@ class ExpenseSynchronizerTest {
             assertEquals(SyncReport(), phone.sync())
             assertEquals(listOf(5L), server.pullCursors)
         }
+
+    private companion object {
+        /** Long enough for an unguarded second sync to reach the server; only a broken lock waits it out. */
+        const val OVERLAP_WINDOW_MS = 300L
+    }
 
     private fun networkExpense(
         id: String,

@@ -8,6 +8,8 @@ import com.spendlens.core.data.repository.OfflineFirstBudgetRepository
 import com.spendlens.core.data.repository.OfflineFirstCategoryRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseConflictRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseRepository
+import com.spendlens.core.data.sync.ExpenseSynchronizer
+import com.spendlens.core.data.sync.Synchronizer
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -37,4 +39,9 @@ internal abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindsExpenseConflictRepository(impl: OfflineFirstExpenseConflictRepository): ExpenseConflictRepository
+
+    /** `@Singleton` is load-bearing: the synchronizer's lock only keeps passes apart within one instance. */
+    @Binds
+    @Singleton
+    abstract fun bindsSynchronizer(impl: ExpenseSynchronizer): Synchronizer
 }

@@ -2,6 +2,7 @@ package com.spendlens.core.data.repository
 
 import com.spendlens.core.common.di.Dispatcher
 import com.spendlens.core.common.di.SpendLensDispatcher
+import com.spendlens.core.data.sync.SyncManager
 import com.spendlens.core.database.DatabaseTransactionRunner
 import com.spendlens.core.database.dao.ExpenseConflictDao
 import com.spendlens.core.database.dao.ExpenseDao
@@ -30,6 +31,7 @@ class OfflineFirstExpenseConflictRepository
         private val expenseDao: ExpenseDao,
         private val conflictDao: ExpenseConflictDao,
         private val transaction: DatabaseTransactionRunner,
+        private val syncManager: SyncManager,
         private val clock: Clock,
         @param:Dispatcher(SpendLensDispatcher.IO)
         private val ioDispatcher: CoroutineDispatcher,
@@ -48,6 +50,8 @@ class OfflineFirstExpenseConflictRepository
                     )
                     conflictDao.delete(expenseId)
                 }
+                // Keeping this device's version is an edit the server has not seen yet.
+                syncManager.requestSync()
             }
 
         override suspend fun keepRemote(expenseId: String) =

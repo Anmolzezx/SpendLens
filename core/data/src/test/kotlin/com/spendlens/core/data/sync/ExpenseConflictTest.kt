@@ -141,9 +141,11 @@ class ExpenseConflictTest {
         runTest {
             conflictOnTablet()
 
+            val requestsBefore = tablet.syncManager.requestCount
             tablet.conflicts.keepLocal("a")
 
             assertNull(tablet.storedConflict("a"))
+            assertEquals(requestsBefore + 1, tablet.syncManager.requestCount)
             assertEquals(SyncReport(pushed = 1), tablet.sync())
             assertEquals(900L, server.expenses.getValue("a").amountMinor)
             phone.sync()

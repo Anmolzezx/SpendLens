@@ -13,21 +13,10 @@ import com.spendlens.core.network.model.NetworkExpense
 import com.spendlens.core.network.model.NetworkPushRequest
 import com.spendlens.core.network.model.NetworkPushResult
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-
-/** What one sync pass did. */
-data class SyncReport(
-    /** Local changes the server accepted. */
-    val pushed: Int = 0,
-    /** Server changes written to this device. */
-    val pulled: Int = 0,
-    /** Expenses found changed on both sides, or whose other side changed again. */
-    val conflicts: Int = 0,
-) {
-    operator fun plus(other: SyncReport) =
-        SyncReport(pushed + other.pushed, pulled + other.pulled, conflicts + other.conflicts)
-}
 
 /**
  * Two-way sync of expenses: upload this device's changes, then download everyone else's.
@@ -39,6 +28,10 @@ data class SyncReport(
  *
  * Network failures propagate as exceptions. Nothing is marked synced until the server has answered,
  * so a sync cut off at any point is safe to simply run again — deciding when is the caller's job.
+ *
+ * Passes run **one at a time**. The periodic sync and a sync requested after a save are separate
+ * WorkManager jobs and can start together; interleaved, both would upload the same rows, and the
+ * slower one would write back an older pull cursor. The lock is per instance, and the app binds one.
  */
 class ExpenseSynchronizer
     @Inject
@@ -50,11 +43,15 @@ class ExpenseSynchronizer
         private val network: SpendLensNetworkDataSource,
         @param:Dispatcher(SpendLensDispatcher.IO)
         private val ioDispatcher: CoroutineDispatcher,
-    ) {
+    ) : Synchronizer {
+        private val mutex = Mutex()
+
         /** Push before pull, so this device's changes are on the server before it compares against it. */
-        suspend fun sync(): SyncReport =
-            withContext(ioDispatcher) {
-                push() + pull()
+        override suspend fun sync(): SyncReport =
+            mutex.withLock {
+                withContext(ioDispatcher) {
+                    push() + pull()
+                }
             }
 
         private suspend fun push(): SyncReport {

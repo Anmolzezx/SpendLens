@@ -34,6 +34,11 @@ dependencies {
     implementation(projects.feature.capture)
     implementation(projects.feature.expenses)
     implementation(projects.feature.insights)
+    implementation(projects.sync)
+
+    // The Application supplies WorkManager's configuration, with Hilt's worker factory.
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

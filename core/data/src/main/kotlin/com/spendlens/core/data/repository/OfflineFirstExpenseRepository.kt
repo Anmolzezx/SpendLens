@@ -2,6 +2,7 @@ package com.spendlens.core.data.repository
 
 import com.spendlens.core.common.di.Dispatcher
 import com.spendlens.core.common.di.SpendLensDispatcher
+import com.spendlens.core.data.sync.SyncManager
 import com.spendlens.core.database.DatabaseTransactionRunner
 import com.spendlens.core.database.dao.ExpenseDao
 import com.spendlens.core.database.entity.asDomainModel
@@ -28,6 +29,7 @@ class OfflineFirstExpenseRepository
     constructor(
         private val expenseDao: ExpenseDao,
         private val transaction: DatabaseTransactionRunner,
+        private val syncManager: SyncManager,
         private val clock: Clock,
         @param:Dispatcher(SpendLensDispatcher.IO)
         private val ioDispatcher: CoroutineDispatcher,
@@ -73,10 +75,13 @@ class OfflineFirstExpenseRepository
                             ).asEntity(),
                     )
                 }
+                // After the transaction commits, so the sync it starts is guaranteed to see this write.
+                syncManager.requestSync()
             }
 
         override suspend fun delete(id: String) =
             withContext(ioDispatcher) {
                 expenseDao.softDelete(id = id, updatedAt = clock.millis())
+                syncManager.requestSync()
             }
     }

@@ -11,6 +11,7 @@ import com.spendlens.core.database.entity.ExpenseEntity
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.SyncState
 import com.spendlens.core.testing.network.FakeSpendLensServer
+import com.spendlens.core.testing.sync.TestSyncManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -35,12 +36,16 @@ internal class TestDevice(
     private val clock = TickingClock(Instant.parse("2026-09-15T08:00:00Z"))
     private val transaction = RoomTransactionRunner(database)
 
-    val expenses = OfflineFirstExpenseRepository(database.expenseDao(), transaction, clock, dispatcher)
+    /** Records requests only. These tests decide exactly when each device syncs. */
+    val syncManager = TestSyncManager()
+
+    val expenses = OfflineFirstExpenseRepository(database.expenseDao(), transaction, syncManager, clock, dispatcher)
 
     val conflicts = OfflineFirstExpenseConflictRepository(
         expenseDao = database.expenseDao(),
         conflictDao = database.expenseConflictDao(),
         transaction = transaction,
+        syncManager = syncManager,
         clock = clock,
         ioDispatcher = dispatcher,
     )

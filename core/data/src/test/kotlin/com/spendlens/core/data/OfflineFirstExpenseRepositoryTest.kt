@@ -8,6 +8,7 @@ import com.spendlens.core.database.SpendLensDatabase
 import com.spendlens.core.database.entity.asEntity
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.SyncState
+import com.spendlens.core.testing.sync.TestSyncManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -38,6 +39,7 @@ class OfflineFirstExpenseRepositoryTest {
     private val fixedNow: Instant = Instant.parse("2026-09-01T09:30:00Z")
     private lateinit var database: SpendLensDatabase
     private lateinit var repository: OfflineFirstExpenseRepository
+    private val syncManager = TestSyncManager()
 
     @Before
     fun setUp() {
@@ -49,6 +51,7 @@ class OfflineFirstExpenseRepositoryTest {
         repository = OfflineFirstExpenseRepository(
             expenseDao = database.expenseDao(),
             transaction = RoomTransactionRunner(database),
+            syncManager = syncManager,
             // Fixed, so `updatedAt` is an exact expected value rather than "roughly now".
             clock = Clock.fixed(fixedNow, ZoneOffset.UTC),
             ioDispatcher = UnconfinedTestDispatcher(),
@@ -157,6 +160,17 @@ class OfflineFirstExpenseRepositoryTest {
                 .sorted()
 
             assertEquals(listOf("first", "last"), ids)
+        }
+
+    /** Offline-first means the save never waits for sync — it only asks for one. */
+    @Test
+    fun `saving and deleting each ask for a sync`() =
+        runTest {
+            repository.upsert(expense(id = "a"))
+            assertEquals(1, syncManager.requestCount)
+
+            repository.delete("a")
+            assertEquals(2, syncManager.requestCount)
         }
 
     /**
