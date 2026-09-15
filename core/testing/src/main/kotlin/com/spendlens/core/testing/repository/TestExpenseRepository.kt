@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.YearMonth
-import java.time.ZoneId
 
 /**
  * An in-memory [ExpenseRepository] for ViewModel tests.
@@ -39,10 +38,8 @@ class TestExpenseRepository(
     override fun observeExpense(id: String): Flow<Expense?> =
         backing.map { expenses -> expenses.visible().firstOrNull { it.id == id } }
 
-    override fun observeExpensesIn(
-        month: YearMonth,
-        zoneId: ZoneId,
-    ): Flow<List<Expense>> = backing.map { expenses -> expenses.visible().filter { it.occurredIn(month, zoneId) } }
+    override fun observeExpensesIn(month: YearMonth): Flow<List<Expense>> =
+        backing.map { expenses -> expenses.visible().filter { it.occurredIn(month) } }
 
     override suspend fun upsert(expense: Expense) {
         val stamped = expense.copy(syncState = SyncState.PENDING, updatedAt = now)
@@ -59,5 +56,8 @@ class TestExpenseRepository(
         }
     }
 
-    private fun List<Expense>.visible() = filterNot { it.isDeleted }.sortedByDescending { it.occurredAt }
+    /** Same ordering as the DAO — newest day first, most recently edited first within a day. */
+    private fun List<Expense>.visible() =
+        filterNot { it.isDeleted }
+            .sortedWith(compareByDescending<Expense> { it.occurredOn }.thenByDescending { it.updatedAt })
 }

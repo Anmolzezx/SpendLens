@@ -9,19 +9,17 @@ import com.spendlens.core.model.sample.SampleExpenses
 import com.spendlens.core.model.toAmountInput
 import kotlinx.collections.immutable.toImmutableList
 import java.time.YearMonth
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Preview fixtures, pinned to the month the sample data occupies and to UTC / [Locale.US].
+ * Preview fixtures, pinned to the month the sample data occupies and to [Locale.US].
  *
  * Unlike the ViewModel this joins [SampleBudgets], so previews exercise the under / near / over
  * meter states that the app itself cannot show until budgets are persisted.
  */
 internal object InsightsPreviewData {
     private val month = YearMonth.of(2026, 8)
-    private val zone: ZoneId = ZoneId.of("UTC")
     private val locale: Locale = Locale.US
     private const val CURRENCY = "USD"
 
@@ -29,12 +27,12 @@ internal object InsightsPreviewData {
 
     private fun build(): InsightsUiState {
         val expenses = SampleExpenses.allIncludingDeleted
-        val totalMinor = monthlyTotalMinor(expenses, month, zone)
+        val totalMinor = monthlyTotalMinor(expenses, month)
 
         return InsightsUiState.Success(
             monthLabel = month.format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)),
             totalSpend = totalMinor.formatAsMoney(CURRENCY, locale),
-            categories = categorySpend(expenses, SampleBudgets.all, month, zone)
+            categories = categorySpend(expenses, SampleBudgets.all, month)
                 .map { spend ->
                     val category = SampleCategories.byId[spend.categoryId]
                     CategoryInsightUiModel(

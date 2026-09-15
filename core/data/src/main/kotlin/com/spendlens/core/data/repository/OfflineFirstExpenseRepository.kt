@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.YearMonth
-import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -37,24 +36,13 @@ class OfflineFirstExpenseRepository
         override fun observeExpense(id: String): Flow<Expense?> =
             expenseDao.observeExpense(id).map { it?.asDomainModel() }
 
-        /**
-         * The month-to-instant conversion lives here rather than in the DAO: SQL should compare
-         * numbers, and deciding *which* numbers is timezone logic that belongs in one place.
-         */
-        override fun observeExpensesIn(
-            month: YearMonth,
-            zoneId: ZoneId,
-        ): Flow<List<Expense>> {
-            val start = month.atDay(1).atStartOfDay(zoneId).toInstant()
-            val end = month
-                .plusMonths(1)
-                .atDay(1)
-                .atStartOfDay(zoneId)
-                .toInstant()
-            return expenseDao
-                .observeExpensesBetween(start.toEpochMilli(), end.toEpochMilli())
-                .map { entities -> entities.map { it.asDomainModel() } }
-        }
+        /** The DAO compares epoch days; turning a month into that range is done once, here. */
+        override fun observeExpensesIn(month: YearMonth): Flow<List<Expense>> =
+            expenseDao
+                .observeExpensesBetween(
+                    startDayInclusive = month.atDay(1).toEpochDay(),
+                    endDayExclusive = month.plusMonths(1).atDay(1).toEpochDay(),
+                ).map { entities -> entities.map { it.asDomainModel() } }
 
         override suspend fun upsert(expense: Expense) =
             withContext(ioDispatcher) {

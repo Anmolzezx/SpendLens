@@ -3,7 +3,6 @@ package com.spendlens.core.data.repository
 import com.spendlens.core.model.Expense
 import kotlinx.coroutines.flow.Flow
 import java.time.YearMonth
-import java.time.ZoneId
 
 /**
  * Reads and writes expenses.
@@ -19,13 +18,11 @@ interface ExpenseRepository {
     fun observeExpense(id: String): Flow<Expense?>
 
     /**
-     * @param zoneId decides which month a near-midnight expense belongs to. Explicit rather than
-     *   assumed — see the open question in DECISIONS.md.
+     * No timezone parameter. It used to need one, when an expense's date was an instant and a
+     * near-midnight expense belonged to different months in different zones. Dates are calendar
+     * dates now, so a month contains exactly the expenses dated in it.
      */
-    fun observeExpensesIn(
-        month: YearMonth,
-        zoneId: ZoneId,
-    ): Flow<List<Expense>>
+    fun observeExpensesIn(month: YearMonth): Flow<List<Expense>>
 
     /**
      * Creates or replaces. The implementation stamps `updatedAt` and marks the row `PENDING`;

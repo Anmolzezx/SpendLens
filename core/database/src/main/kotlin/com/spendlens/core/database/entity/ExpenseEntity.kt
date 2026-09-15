@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.SyncState
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * The storage shape of an [Expense].
@@ -33,8 +34,12 @@ data class ExpenseEntity(
     @ColumnInfo(name = "amount_minor")
     val amountMinor: Long,
     val currency: String,
+    /**
+     * Stored as an epoch day in the column still named `occurred_at`. Renaming it would force SQLite
+     * to rebuild the table; keeping the name lets the 2 → 3 migration rewrite values in place.
+     */
     @ColumnInfo(name = "occurred_at")
-    val occurredAt: Instant,
+    val occurredOn: LocalDate,
     @ColumnInfo(name = "category_id")
     val categoryId: String,
     val note: String?,
@@ -46,6 +51,8 @@ data class ExpenseEntity(
     val updatedAt: Instant,
     @ColumnInfo(name = "is_deleted")
     val isDeleted: Boolean,
+    @ColumnInfo(name = "remote_version")
+    val remoteVersion: Long? = null,
 )
 
 fun ExpenseEntity.asDomainModel() =
@@ -54,13 +61,14 @@ fun ExpenseEntity.asDomainModel() =
         merchant = merchant,
         amountMinor = amountMinor,
         currency = currency,
-        occurredAt = occurredAt,
+        occurredOn = occurredOn,
         categoryId = categoryId,
         note = note,
         receiptImagePath = receiptImagePath,
         syncState = syncState,
         updatedAt = updatedAt,
         isDeleted = isDeleted,
+        remoteVersion = remoteVersion,
     )
 
 fun Expense.asEntity() =
@@ -69,11 +77,12 @@ fun Expense.asEntity() =
         merchant = merchant,
         amountMinor = amountMinor,
         currency = currency,
-        occurredAt = occurredAt,
+        occurredOn = occurredOn,
         categoryId = categoryId,
         note = note,
         receiptImagePath = receiptImagePath,
         syncState = syncState,
         updatedAt = updatedAt,
         isDeleted = isDeleted,
+        remoteVersion = remoteVersion,
     )

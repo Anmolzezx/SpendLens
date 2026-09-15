@@ -16,6 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * DAO tests against a real SQLite database, in memory.
@@ -57,27 +58,27 @@ class ExpenseDaoTest {
 
     /** The round trip that proves the TypeConverters work in both directions. */
     @Test
-    fun `preserves Instant and SyncState across a round trip`() =
+    fun `preserves LocalDate and SyncState across a round trip`() =
         runTest {
-            val occurredAt = Instant.parse("2026-08-26T18:42:00Z")
+            val occurredOn = LocalDate.parse("2026-08-26")
             dao.upsert(
-                expense(id = "a", occurredAt = occurredAt, syncState = SyncState.CONFLICT),
+                expense(id = "a", occurredOn = occurredOn, syncState = SyncState.CONFLICT),
             )
 
             val stored = dao.observeExpenses().first().single()
 
-            assertEquals(occurredAt, stored.occurredAt)
+            assertEquals(occurredOn, stored.occurredOn)
             assertEquals(SyncState.CONFLICT, stored.syncState)
         }
 
     @Test
-    fun `orders by occurred_at descending`() =
+    fun `orders by occurred_on descending`() =
         runTest {
             dao.upsert(
                 listOf(
-                    expense(id = "old", occurredAt = Instant.parse("2026-08-01T10:00:00Z")),
-                    expense(id = "new", occurredAt = Instant.parse("2026-08-20T10:00:00Z")),
-                    expense(id = "mid", occurredAt = Instant.parse("2026-08-10T10:00:00Z")),
+                    expense(id = "old", occurredOn = LocalDate.parse("2026-08-01")),
+                    expense(id = "new", occurredOn = LocalDate.parse("2026-08-20")),
+                    expense(id = "mid", occurredOn = LocalDate.parse("2026-08-10")),
                 ),
             )
 
@@ -148,24 +149,40 @@ class ExpenseDaoTest {
     @Test
     fun `observeExpensesBetween is start-inclusive and end-exclusive`() =
         runTest {
-            val start = Instant.parse("2026-08-01T00:00:00Z")
-            val end = Instant.parse("2026-09-01T00:00:00Z")
+            val start = LocalDate.parse("2026-08-01")
+            val end = LocalDate.parse("2026-09-01")
             dao.upsert(
                 listOf(
-                    expense(id = "before", occurredAt = start.minusMillis(1)),
-                    expense(id = "onStart", occurredAt = start),
-                    expense(id = "inside", occurredAt = Instant.parse("2026-08-15T00:00:00Z")),
-                    expense(id = "onEnd", occurredAt = end),
+                    expense(id = "before", occurredOn = start.minusDays(1)),
+                    expense(id = "onStart", occurredOn = start),
+                    expense(id = "inside", occurredOn = LocalDate.parse("2026-08-15")),
+                    expense(id = "onEnd", occurredOn = end),
                 ),
             )
 
             val ids = dao
-                .observeExpensesBetween(start.toEpochMilli(), end.toEpochMilli())
+                .observeExpensesBetween(start.toEpochDay(), end.toEpochDay())
                 .first()
                 .map { it.id }
                 .sorted()
 
             assertEquals(listOf("inside", "onStart"), ids)
+        }
+
+    /** Several expenses share a calendar day; the most recently edited one comes first. */
+    @Test
+    fun `breaks same-day ties by most recently updated`() =
+        runTest {
+            val sameDay = LocalDate.parse("2026-08-15")
+            dao.upsert(
+                listOf(
+                    expense(id = "older", occurredOn = sameDay, updatedAt = 1_000L),
+                    expense(id = "newer", occurredOn = sameDay, updatedAt = 9_000L),
+                    expense(id = "middle", occurredOn = sameDay, updatedAt = 5_000L),
+                ),
+            )
+
+            assertEquals(listOf("newer", "middle", "older"), dao.observeExpenses().first().map { it.id })
         }
 
     @Test
@@ -196,7 +213,7 @@ class ExpenseDaoTest {
         id: String,
         merchant: String = "Merchant",
         amountMinor: Long = 1_000,
-        occurredAt: Instant = Instant.parse("2026-08-15T12:00:00Z"),
+        occurredOn: LocalDate = LocalDate.parse("2026-08-15"),
         syncState: SyncState = SyncState.SYNCED,
         isDeleted: Boolean = false,
         updatedAt: Long = 0L,
@@ -205,7 +222,7 @@ class ExpenseDaoTest {
         merchant = merchant,
         amountMinor = amountMinor,
         currency = "USD",
-        occurredAt = occurredAt,
+        occurredOn = occurredOn,
         categoryId = "cat-groceries",
         note = null,
         receiptImagePath = null,

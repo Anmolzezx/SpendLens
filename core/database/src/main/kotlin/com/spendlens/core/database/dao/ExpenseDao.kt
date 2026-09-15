@@ -12,8 +12,11 @@ interface ExpenseDao {
     /**
      * Every read filters `is_deleted = 0`. Tombstones are rows the sync layer needs and the UI must
      * never see, and leaving that filter to the caller is how one screen eventually forgets it.
+     *
+     * `updated_at` breaks ties. Dates are calendar days, so several expenses routinely share one;
+     * without a second key their order would be whatever SQLite happens to return.
      */
-    @Query("SELECT * FROM expenses WHERE is_deleted = 0 ORDER BY occurred_at DESC")
+    @Query("SELECT * FROM expenses WHERE is_deleted = 0 ORDER BY occurred_at DESC, updated_at DESC")
     fun observeExpenses(): Flow<List<ExpenseEntity>>
 
     @Query("SELECT * FROM expenses WHERE id = :id AND is_deleted = 0")
@@ -22,13 +25,13 @@ interface ExpenseDao {
     @Query(
         """
         SELECT * FROM expenses
-        WHERE is_deleted = 0 AND occurred_at >= :startInclusive AND occurred_at < :endExclusive
-        ORDER BY occurred_at DESC
+        WHERE is_deleted = 0 AND occurred_at >= :startDayInclusive AND occurred_at < :endDayExclusive
+        ORDER BY occurred_at DESC, updated_at DESC
         """,
     )
     fun observeExpensesBetween(
-        startInclusive: Long,
-        endExclusive: Long,
+        startDayInclusive: Long,
+        endDayExclusive: Long,
     ): Flow<List<ExpenseEntity>>
 
     /** Tombstones included — the sync layer has to upload deletions too. */

@@ -7,11 +7,13 @@ import com.spendlens.core.database.SpendLensDatabase
 import com.spendlens.core.database.dao.BudgetDao
 import com.spendlens.core.database.dao.CategoryDao
 import com.spendlens.core.database.dao.ExpenseDao
+import com.spendlens.core.database.migration.addSpendLensMigrations
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.time.ZoneId
 import javax.inject.Singleton
 
 @Module
@@ -21,6 +23,7 @@ object DatabaseModule {
     @Singleton
     fun providesDatabase(
         @ApplicationContext context: Context,
+        zoneId: ZoneId,
     ): SpendLensDatabase =
         Room
             .databaseBuilder(
@@ -28,6 +31,7 @@ object DatabaseModule {
                 klass = SpendLensDatabase::class.java,
                 name = DATABASE_NAME,
             ).addCallback(SeedCategoriesCallback())
+            .addSpendLensMigrations(zoneId)
             // Deliberately no fallbackToDestructiveMigration(). This is a finance app: silently
             // wiping a user's expenses because a migration was missing is worse than crashing, and
             // a crash in testing is what forces the migration to be written.

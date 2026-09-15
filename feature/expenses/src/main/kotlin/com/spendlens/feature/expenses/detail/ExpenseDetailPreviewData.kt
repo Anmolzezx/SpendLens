@@ -6,7 +6,6 @@ import com.spendlens.core.model.formatAsMoney
 import com.spendlens.core.model.sample.SampleCategories
 import com.spendlens.core.model.sample.SampleExpenses
 import java.io.File
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -18,18 +17,17 @@ import java.util.Locale
  */
 internal fun Expense.toDetailUiModel(
     category: Category?,
-    zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault(),
     resolveReceipt: (String) -> File?,
 ) = ExpenseDetailUiModel(
     id = id,
     merchant = merchant,
     formattedAmount = amountMinor.formatAsMoney(currency, locale),
+    // A calendar date needs no timezone to format.
     formattedDate = DateTimeFormatter
         .ofLocalizedDate(FormatStyle.LONG)
         .withLocale(locale)
-        .withZone(zoneId)
-        .format(occurredAt),
+        .format(occurredOn),
     categoryName = category?.name,
     categoryColorIndex = category?.colorIndex ?: 0,
     note = note,
@@ -37,9 +35,8 @@ internal fun Expense.toDetailUiModel(
     syncState = syncState,
 )
 
-/** Timezone and locale pinned, so previews and screenshot baselines render identically anywhere. */
+/** Locale pinned, so previews and screenshot baselines render identically anywhere. */
 internal object ExpenseDetailPreviewData {
-    private val zone: ZoneId = ZoneId.of("UTC")
     private val locale: Locale = Locale.US
 
     /** Long merchant name, a wrapping note, a receipt, and a PENDING badge. */
@@ -53,7 +50,6 @@ internal object ExpenseDetailPreviewData {
         return ExpenseDetailUiState.Success(
             expense.toDetailUiModel(
                 category = SampleCategories.byId[expense.categoryId],
-                zoneId = zone,
                 locale = locale,
                 // Sample paths point nowhere, so previews render the "unavailable" fallback — which
                 // is the state worth checking in light and dark anyway.

@@ -20,8 +20,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
@@ -113,8 +113,8 @@ class OfflineFirstExpenseRepositoryTest {
     @Test
     fun `observeExpenses returns newest first`() =
         runTest {
-            repository.upsert(expense(id = "old", occurredAt = Instant.parse("2026-08-01T10:00:00Z")))
-            repository.upsert(expense(id = "new", occurredAt = Instant.parse("2026-08-20T10:00:00Z")))
+            repository.upsert(expense(id = "old", occurredOn = LocalDate.parse("2026-08-01")))
+            repository.upsert(expense(id = "new", occurredOn = LocalDate.parse("2026-08-20")))
 
             assertEquals(listOf("new", "old"), repository.observeExpenses().first().map { it.id })
         }
@@ -122,12 +122,12 @@ class OfflineFirstExpenseRepositoryTest {
     @Test
     fun `observeExpensesIn returns only that month`() =
         runTest {
-            repository.upsert(expense(id = "july", occurredAt = Instant.parse("2026-07-31T10:00:00Z")))
-            repository.upsert(expense(id = "august", occurredAt = Instant.parse("2026-08-15T10:00:00Z")))
-            repository.upsert(expense(id = "september", occurredAt = Instant.parse("2026-09-01T10:00:00Z")))
+            repository.upsert(expense(id = "july", occurredOn = LocalDate.parse("2026-07-31")))
+            repository.upsert(expense(id = "august", occurredOn = LocalDate.parse("2026-08-15")))
+            repository.upsert(expense(id = "september", occurredOn = LocalDate.parse("2026-09-01")))
 
             val ids = repository
-                .observeExpensesIn(YearMonth.of(2026, 8), ZoneId.of("UTC"))
+                .observeExpensesIn(YearMonth.of(2026, 8))
                 .first()
                 .map { it.id }
 
@@ -135,26 +135,32 @@ class OfflineFirstExpenseRepositoryTest {
         }
 
     /**
-     * The month boundary moves with the zone. Recorded at 20:00 UTC on 31 July, this expense is
-     * still July in London and already August in Kolkata (UTC+5:30).
+     * Replaced a test asserting the opposite: while dates were instants, 20:00 UTC on 31 July was
+     * July in London and August in Kolkata. With calendar dates both edges of a month are fixed, and
+     * this checks the epoch-day range the repository hands the DAO is inclusive at both ends.
      */
     @Test
-    fun `observeExpensesIn respects the supplied timezone`() =
+    fun `observeExpensesIn includes the first and last day of the month`() =
         runTest {
-            repository.upsert(expense(id = "boundary", occurredAt = Instant.parse("2026-07-31T20:00:00Z")))
+            repository.upsert(expense(id = "first", occurredOn = LocalDate.parse("2026-08-01")))
+            repository.upsert(expense(id = "last", occurredOn = LocalDate.parse("2026-08-31")))
+            repository.upsert(expense(id = "dayBefore", occurredOn = LocalDate.parse("2026-07-31")))
+            repository.upsert(expense(id = "dayAfter", occurredOn = LocalDate.parse("2026-09-01")))
 
-            val inUtc = repository.observeExpensesIn(YearMonth.of(2026, 8), ZoneId.of("UTC")).first()
-            val inKolkata = repository.observeExpensesIn(YearMonth.of(2026, 8), ZoneId.of("Asia/Kolkata")).first()
+            val ids = repository
+                .observeExpensesIn(YearMonth.of(2026, 8))
+                .first()
+                .map { it.id }
+                .sorted()
 
-            assertTrue("still July in UTC", inUtc.isEmpty())
-            assertEquals(listOf("boundary"), inKolkata.map { it.id })
+            assertEquals(listOf("first", "last"), ids)
         }
 
     private fun expense(
         id: String,
         merchant: String = "Merchant",
         amountMinor: Long = 1_000,
-        occurredAt: Instant = Instant.parse("2026-08-15T12:00:00Z"),
+        occurredOn: LocalDate = LocalDate.parse("2026-08-15"),
         syncState: SyncState = SyncState.PENDING,
         updatedAt: Instant = Instant.EPOCH,
     ) = Expense(
@@ -162,7 +168,7 @@ class OfflineFirstExpenseRepositoryTest {
         merchant = merchant,
         amountMinor = amountMinor,
         currency = "USD",
-        occurredAt = occurredAt,
+        occurredOn = occurredOn,
         categoryId = "cat-groceries",
         note = null,
         receiptImagePath = null,

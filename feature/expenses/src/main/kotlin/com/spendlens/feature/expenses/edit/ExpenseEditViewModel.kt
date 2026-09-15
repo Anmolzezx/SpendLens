@@ -23,7 +23,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
-import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
 
@@ -35,6 +36,7 @@ class ExpenseEditViewModel
         private val expenseRepository: ExpenseRepository,
         categoryRepository: CategoryRepository,
         private val clock: Clock,
+        private val zoneId: ZoneId,
         private val receiptImageStore: ReceiptImageStore,
     ) : ViewModel() {
         private val route: ExpenseEditRoute = savedStateHandle.toRoute()
@@ -47,7 +49,7 @@ class ExpenseEditViewModel
             FormState(
                 merchant = route.merchant.orEmpty(),
                 amount = route.amountMinor?.toAmountInput(DEFAULT_CURRENCY).orEmpty(),
-                occurredAtMillis = route.occurredAtMillis ?: clock.millis(),
+                occurredOn = route.occurredOnEpochDay?.let(LocalDate::ofEpochDay) ?: today(),
                 receiptImagePath = route.receiptImagePath,
             ),
         )
@@ -61,7 +63,7 @@ class ExpenseEditViewModel
                     currency = formState.currency,
                     categoryId = formState.categoryId,
                     note = formState.note,
-                    occurredAtMillis = formState.occurredAtMillis,
+                    occurredOn = formState.occurredOn,
                     categories = categories.toImmutableList(),
                     showErrors = formState.showErrors,
                 )
@@ -75,7 +77,7 @@ class ExpenseEditViewModel
                     currency = DEFAULT_CURRENCY,
                     categoryId = null,
                     note = "",
-                    occurredAtMillis = clock.millis(),
+                    occurredOn = today(),
                     categories = emptyList<com.spendlens.core.model.Category>().toImmutableList(),
                     showErrors = false,
                 ),
@@ -93,7 +95,7 @@ class ExpenseEditViewModel
                             currency = existing.currency,
                             categoryId = existing.categoryId,
                             note = existing.note.orEmpty(),
-                            occurredAtMillis = existing.occurredAt.toEpochMilli(),
+                            occurredOn = existing.occurredOn,
                             receiptImagePath = existing.receiptImagePath,
                         )
                     }
@@ -109,7 +111,7 @@ class ExpenseEditViewModel
 
         fun onNoteChange(value: String) = form.update { it.copy(note = value) }
 
-        fun onDateChange(millis: Long) = form.update { it.copy(occurredAtMillis = millis) }
+        fun onDateChange(date: LocalDate) = form.update { it.copy(occurredOn = date) }
 
         /**
          * @return true when the expense was saved and the caller should navigate back. Invalid input
@@ -133,7 +135,7 @@ class ExpenseEditViewModel
                         merchant = state.merchant.trim(),
                         amountMinor = amountMinor,
                         currency = state.currency,
-                        occurredAt = Instant.ofEpochMilli(state.occurredAtMillis),
+                        occurredOn = state.occurredOn,
                         categoryId = requireNotNull(state.categoryId),
                         note = state.note.trim().takeIf { it.isNotEmpty() },
                         receiptImagePath = form.value.receiptImagePath,
@@ -167,13 +169,16 @@ class ExpenseEditViewModel
             super.onCleared()
         }
 
+        /** "Today" in the device's zone — the zone is needed to know what day it is, nothing more. */
+        private fun today(): LocalDate = LocalDate.now(clock.withZone(zoneId))
+
         private data class FormState(
             val merchant: String = "",
             val amount: String = "",
             val currency: String = DEFAULT_CURRENCY,
             val categoryId: String? = null,
             val note: String = "",
-            val occurredAtMillis: Long,
+            val occurredOn: LocalDate,
             val receiptImagePath: String? = null,
             val showErrors: Boolean = false,
         )

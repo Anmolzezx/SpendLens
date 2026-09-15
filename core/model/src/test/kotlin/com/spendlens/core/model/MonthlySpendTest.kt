@@ -5,71 +5,66 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneId
 
 class MonthlySpendTest {
-    private val utc = ZoneId.of("UTC")
     private val august = YearMonth.of(2026, 8)
 
     @Test
     fun `sums expenses in the month`() {
         val expenses = listOf(
-            expense(amountMinor = 1_000, at = "2026-08-02T10:00:00Z"),
-            expense(amountMinor = 2_500, at = "2026-08-20T10:00:00Z"),
+            expense(amountMinor = 1_000, on = "2026-08-02"),
+            expense(amountMinor = 2_500, on = "2026-08-20"),
         )
 
-        assertEquals(3_500L, monthlyTotalMinor(expenses, august, utc))
+        assertEquals(3_500L, monthlyTotalMinor(expenses, august))
     }
 
     @Test
     fun `ignores expenses from other months`() {
         val expenses = listOf(
-            expense(amountMinor = 1_000, at = "2026-08-02T10:00:00Z"),
-            expense(amountMinor = 9_999, at = "2026-07-31T10:00:00Z"),
-            expense(amountMinor = 8_888, at = "2026-09-01T10:00:00Z"),
+            expense(amountMinor = 1_000, on = "2026-08-02"),
+            expense(amountMinor = 9_999, on = "2026-07-31"),
+            expense(amountMinor = 8_888, on = "2026-09-01"),
         )
 
-        assertEquals(1_000L, monthlyTotalMinor(expenses, august, utc))
+        assertEquals(1_000L, monthlyTotalMinor(expenses, august))
     }
 
     /** Tombstones are still rows in the table; they must never reach a total. */
     @Test
     fun `ignores soft-deleted expenses`() {
         val expenses = listOf(
-            expense(amountMinor = 1_000, at = "2026-08-02T10:00:00Z"),
-            expense(amountMinor = 5_000, at = "2026-08-03T10:00:00Z", isDeleted = true),
+            expense(amountMinor = 1_000, on = "2026-08-02"),
+            expense(amountMinor = 5_000, on = "2026-08-03", isDeleted = true),
         )
 
-        assertEquals(1_000L, monthlyTotalMinor(expenses, august, utc))
+        assertEquals(1_000L, monthlyTotalMinor(expenses, august))
     }
 
     /**
-     * Pins the timezone ambiguity documented on [occurredIn]: the same instant falls in a different
-     * month depending on where it is read. This is asserted, not fixed, because the model has not
-     * decided yet — but if `occurredAt` ever becomes a `LocalDate`, this test is the one that must
-     * change, and that makes the change deliberate rather than accidental.
+     * This replaced a test that asserted the opposite. While `occurredAt` was an `Instant`, 23:00 UTC
+     * on 31 August counted toward August in UTC and September in Kolkata — the test pinned that
+     * ambiguity and said it must change if the date ever became a `LocalDate`. It did, on 2026-09-15.
      */
     @Test
-    fun `an instant near midnight can land in a different month by timezone`() {
-        val lateAugustUtc = expense(amountMinor = 1_000, at = "2026-08-31T23:00:00Z")
+    fun `the last day of a month always belongs to that month`() {
+        val lastDayOfAugust = expense(amountMinor = 1_000, on = "2026-08-31")
 
-        assertEquals(1_000L, monthlyTotalMinor(listOf(lateAugustUtc), august, utc))
-        assertEquals(
-            0L,
-            monthlyTotalMinor(listOf(lateAugustUtc), august, ZoneId.of("Asia/Kolkata")),
-        )
+        assertEquals(1_000L, monthlyTotalMinor(listOf(lastDayOfAugust), august))
+        assertEquals(0L, monthlyTotalMinor(listOf(lastDayOfAugust), YearMonth.of(2026, 9)))
     }
 
     @Test
     fun `groups spend by category`() {
         val expenses = listOf(
-            expense(amountMinor = 1_000, at = "2026-08-02T10:00:00Z", categoryId = "food"),
-            expense(amountMinor = 500, at = "2026-08-03T10:00:00Z", categoryId = "food"),
-            expense(amountMinor = 2_000, at = "2026-08-04T10:00:00Z", categoryId = "travel"),
+            expense(amountMinor = 1_000, on = "2026-08-02", categoryId = "food"),
+            expense(amountMinor = 500, on = "2026-08-03", categoryId = "food"),
+            expense(amountMinor = 2_000, on = "2026-08-04", categoryId = "travel"),
         )
 
-        val byCategory = monthlySpendByCategory(expenses, august, utc)
+        val byCategory = monthlySpendByCategory(expenses, august)
 
         assertEquals(mapOf("food" to 1_500L, "travel" to 2_000L), byCategory)
     }
@@ -77,11 +72,11 @@ class MonthlySpendTest {
     @Test
     fun `categorySpend orders by spend descending`() {
         val expenses = listOf(
-            expense(amountMinor = 500, at = "2026-08-02T10:00:00Z", categoryId = "food"),
-            expense(amountMinor = 9_000, at = "2026-08-03T10:00:00Z", categoryId = "travel"),
+            expense(amountMinor = 500, on = "2026-08-02", categoryId = "food"),
+            expense(amountMinor = 9_000, on = "2026-08-03", categoryId = "travel"),
         )
 
-        val result = categorySpend(expenses, budgets = emptyList(), month = august, zoneId = utc)
+        val result = categorySpend(expenses, budgets = emptyList(), month = august)
 
         assertEquals(listOf("travel", "food"), result.map { it.categoryId })
     }
@@ -93,7 +88,6 @@ class MonthlySpendTest {
             expenses = emptyList(),
             budgets = listOf(budget("food", 30_000)),
             month = august,
-            zoneId = utc,
         )
 
         assertEquals(1, result.size)
@@ -104,10 +98,9 @@ class MonthlySpendTest {
     @Test
     fun `categorySpend leaves status null when there is no budget`() {
         val result = categorySpend(
-            expenses = listOf(expense(amountMinor = 500, at = "2026-08-02T10:00:00Z")),
+            expenses = listOf(expense(amountMinor = 500, on = "2026-08-02")),
             budgets = emptyList(),
             month = august,
-            zoneId = utc,
         )
 
         assertNull(result.first().status)
@@ -117,10 +110,9 @@ class MonthlySpendTest {
     @Test
     fun `categorySpend ignores budgets from other months`() {
         val result = categorySpend(
-            expenses = listOf(expense(amountMinor = 500, at = "2026-08-02T10:00:00Z", categoryId = "food")),
+            expenses = listOf(expense(amountMinor = 500, on = "2026-08-02", categoryId = "food")),
             budgets = listOf(budget("food", 30_000, YearMonth.of(2026, 7))),
             month = august,
-            zoneId = utc,
         )
 
         assertNull("a July budget must not apply to August", result.first().limitMinor)
@@ -136,20 +128,20 @@ class MonthlySpendTest {
 
     private fun expense(
         amountMinor: Long,
-        at: String,
+        on: String,
         categoryId: String = "food",
         isDeleted: Boolean = false,
     ) = Expense(
-        id = "id-$at-$amountMinor",
+        id = "id-$on-$amountMinor",
         merchant = "Merchant",
         amountMinor = amountMinor,
         currency = "USD",
-        occurredAt = Instant.parse(at),
+        occurredOn = LocalDate.parse(on),
         categoryId = categoryId,
         note = null,
         receiptImagePath = null,
         syncState = SyncState.SYNCED,
-        updatedAt = Instant.parse(at),
+        updatedAt = Instant.EPOCH,
         isDeleted = isDeleted,
     )
 

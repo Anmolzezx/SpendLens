@@ -16,9 +16,10 @@ enum class SyncState {
     /**
      * The same record was edited on two devices and the two edits diverged.
      *
-     * Note: a pure last-write-wins resolution can never produce this state — it silently discards
-     * the losing edit. This value exists because the sync design in phase 3 is expected to detect
-     * divergence and surface it, rather than drop a user's data on the floor.
+     * Kept deliberately (decided 2026-09-15) instead of resolving by last-write-wins. LWW can never
+     * produce this state — it silently throws away the older edit, and the user never learns an edit
+     * was lost. Sync instead detects divergence through [Expense.remoteVersion], keeps both versions,
+     * and asks the user which to keep.
      */
     CONFLICT,
 }

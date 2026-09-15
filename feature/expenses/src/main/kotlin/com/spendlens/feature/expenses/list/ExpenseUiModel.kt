@@ -5,7 +5,6 @@ import com.spendlens.core.model.Category
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.SyncState
 import com.spendlens.core.model.formatAsMoney
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -32,30 +31,23 @@ data class ExpenseUiModel(
 )
 
 /**
- * @param zoneId and @param locale are explicit so previews and screenshot tests can pin them.
- *   Reading the ambient defaults would make the rendered date depend on the machine running the test.
+ * @param locale is explicit so previews and screenshot tests can pin it. There is no timezone
+ *   parameter: the date is a calendar date, and formatting one needs no zone.
  */
 internal fun Expense.toUiModel(
     category: Category?,
-    zoneId: ZoneId = ZoneId.systemDefault(),
     locale: Locale = Locale.getDefault(),
 ): ExpenseUiModel =
     ExpenseUiModel(
         id = id,
         merchant = merchant,
         formattedAmount = amountMinor.formatAsMoney(currency, locale),
-        formattedDate = dateFormatter(locale, zoneId).format(occurredAt),
+        formattedDate = DateTimeFormatter
+            .ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(locale)
+            .format(occurredOn),
         categoryName = category?.name,
         categoryColorIndex = category?.colorIndex ?: 0,
         hasReceipt = receiptImagePath != null,
         syncState = syncState,
     )
-
-private fun dateFormatter(
-    locale: Locale,
-    zoneId: ZoneId,
-): DateTimeFormatter =
-    DateTimeFormatter
-        .ofLocalizedDate(FormatStyle.MEDIUM)
-        .withLocale(locale)
-        .withZone(zoneId)

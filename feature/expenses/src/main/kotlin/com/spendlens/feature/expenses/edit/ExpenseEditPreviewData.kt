@@ -2,11 +2,11 @@ package com.spendlens.feature.expenses.edit
 
 import com.spendlens.core.model.sample.SampleCategories
 import kotlinx.collections.immutable.toImmutableList
-import java.time.Instant
+import java.time.LocalDate
 
 /** Fixtures with a pinned date, so previews and screenshot baselines stay deterministic. */
 internal object ExpenseEditPreviewData {
-    private val fixedDate = Instant.parse("2026-08-26T18:42:00Z").toEpochMilli()
+    private val fixedDate = LocalDate.of(2026, 8, 26)
 
     val blank = state(
         isNewExpense = true,
@@ -48,7 +48,7 @@ internal object ExpenseEditPreviewData {
         currency = "USD",
         categoryId = categoryId,
         note = note,
-        occurredAtMillis = fixedDate,
+        occurredOn = fixedDate,
         categories = SampleCategories.all.toImmutableList(),
         showErrors = showErrors,
     )

@@ -37,7 +37,8 @@ import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.model.Category
 import com.spendlens.feature.expenses.R
 import java.time.Instant
-import java.time.ZoneId
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -50,7 +51,7 @@ internal fun ExpenseEditContent(
     onAmountChange: (String) -> Unit,
     onCategoryChange: (String) -> Unit,
     onNoteChange: (String) -> Unit,
-    onDateChange: (Long) -> Unit,
+    onDateChange: (LocalDate) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -124,7 +125,7 @@ internal fun ExpenseEditContent(
             )
 
             DateField(
-                occurredAtMillis = uiState.occurredAtMillis,
+                occurredOn = uiState.occurredOn,
                 onClick = { showDatePicker = true },
             )
 
@@ -139,13 +140,24 @@ internal fun ExpenseEditContent(
     }
 
     if (showDatePicker) {
-        val pickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.occurredAtMillis)
+        // Material's DatePicker represents a date as **UTC midnight** in epoch milliseconds. Both
+        // directions therefore convert in UTC. Using the device zone instead is the classic bug: west
+        // of Greenwich, UTC midnight on the 26th is the evening of the 25th, and the picked date
+        // saves one day early. The previous Instant-based version of this screen had exactly that.
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = uiState.occurredOn
+                .atStartOfDay(ZoneOffset.UTC)
+                .toInstant()
+                .toEpochMilli(),
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        pickerState.selectedDateMillis?.let(onDateChange)
+                        pickerState.selectedDateMillis?.let { millis ->
+                            onDateChange(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+                        }
                         showDatePicker = false
                     },
                 ) {
@@ -209,7 +221,7 @@ private fun CategoryPicker(
 
 @Composable
 private fun DateField(
-    occurredAtMillis: Long,
+    occurredOn: LocalDate,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -223,19 +235,17 @@ private fun DateField(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TextButton(onClick = onClick) {
-            Text(formatDate(occurredAtMillis))
+            Text(formatDate(occurredOn))
         }
     }
 }
 
 @Composable
-private fun formatDate(millis: Long): String {
-    val formatter = DateTimeFormatter
+private fun formatDate(date: LocalDate): String =
+    DateTimeFormatter
         .ofLocalizedDate(FormatStyle.MEDIUM)
         .withLocale(Locale.getDefault())
-        .withZone(ZoneId.systemDefault())
-    return formatter.format(Instant.ofEpochMilli(millis))
-}
+        .format(date)
 
 /**
  * Errors are only shown once the user has attempted to save. Flagging "required" on a field they

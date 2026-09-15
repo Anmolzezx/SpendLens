@@ -11,7 +11,6 @@ import com.spendlens.feature.expenses.navigation.ExpenseEditRoute
 import com.spendlens.feature.expenses.navigation.ExpensesGraph
 import com.spendlens.feature.expenses.navigation.expensesGraph
 import com.spendlens.feature.insights.navigation.insightsGraph
-import java.time.ZoneId
 
 /**
  * The one place that knows about every feature.
@@ -42,10 +41,9 @@ fun SpendLensNavHost(
                     ExpenseEditRoute(
                         merchant = receipt.merchant,
                         amountMinor = receipt.totalMinor,
-                        occurredAtMillis = receipt.date
-                            ?.atStartOfDay(ZoneId.systemDefault())
-                            ?.toInstant()
-                            ?.toEpochMilli(),
+                        // The parser already returns a LocalDate, so it now passes straight through —
+                        // no timezone round-trip that could shift the printed date by a day.
+                        occurredOnEpochDay = receipt.date?.toEpochDay(),
                         receiptImagePath = imagePath,
                     ),
                 ) {

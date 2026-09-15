@@ -5,6 +5,7 @@ import com.spendlens.core.model.Category
 import com.spendlens.core.model.MoneyParseResult
 import com.spendlens.core.model.parseMoney
 import kotlinx.collections.immutable.ImmutableList
+import java.time.LocalDate
 
 /** Why a field is invalid. The composable maps these to strings; the state holds no `Context`. */
 enum class FieldError {
@@ -30,7 +31,7 @@ data class ExpenseEditUiState(
     val currency: String,
     val categoryId: String?,
     val note: String,
-    val occurredAtMillis: Long,
+    val occurredOn: LocalDate,
     val categories: ImmutableList<Category>,
     val showErrors: Boolean,
 ) {

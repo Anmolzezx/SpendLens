@@ -3,144 +3,216 @@ package com.spendlens.core.database
 import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.spendlens.core.database.entity.BudgetEntity
+import com.spendlens.core.database.migration.addSpendLensMigrations
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.io.File
+import java.time.Instant
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneId
 
 /**
- * Proves the version 1 → 2 migration actually runs against a real on-disk database.
+ * Proves every migration runs against a real on-disk database, from each shipped version.
  *
- * The migration is an `@AutoMigration`, so Room generates the SQL — but *generated* is not
- * *verified*. The database is deliberately built without a destructive fallback, so a broken
- * migration crashes rather than silently wiping a user's expenses. This test is what makes that
- * crash happen in CI instead of on someone's phone after an update.
+ * Old databases are built from the **committed schema JSON** (`schemas/…/N.json`) — its `createSql`,
+ * indices and Room's identity hash — rather than from DDL copied into this file. A hand-copied
+ * fixture can drift from what actually shipped; the exported schema is what shipped.
  *
- * The v1 schema is created from the DDL in the committed `schemas/…/1.json` rather than from a
- * hand-typed copy, so it cannot drift from what shipped.
+ * The database is opened with [addSpendLensMigrations], the same function production uses, so a
+ * migration missing from the app is also missing here and the test fails instead of the upgrade.
  */
 @RunWith(RobolectricTestRunner::class)
 class MigrationTest {
+    private val databaseFiles = mutableListOf<File>()
+    private val openDatabases = mutableListOf<SpendLensDatabase>()
     private lateinit var databaseFile: File
 
     @Before
     fun setUp() {
-        databaseFile = File.createTempFile("migration-test", ".db").apply { delete() }
+        databaseFile = newDatabaseFile()
     }
 
+    /**
+     * One teardown, in order: close every connection, then delete the files. Two separate `@After`
+     * methods would run in an unspecified order and could delete a database that is still open.
+     */
     @After
     fun tearDown() {
-        databaseFile.delete()
+        openDatabases.forEach { it.close() }
+        databaseFiles.forEach { file ->
+            listOf("", "-wal", "-shm", "-journal").forEach { File(file.path + it).delete() }
+        }
     }
 
+    // -- 1 → 3 --------------------------------------------------------------------------------------
+
     @Test
-    fun `migrating 1 to 2 preserves existing expenses`() =
+    fun `upgrading from version 1 preserves expenses`() =
         runTest {
-            createVersion1Database()
+            createDatabaseAt(version = 1) { insertExpense(occurredAtMillis = 1_000) }
 
-            val migrated = openWithRoom()
-
-            val expense = migrated
+            val expense = openWithRoom(UTC)
                 .expenseDao()
                 .observeExpenses()
                 .first()
                 .single()
+
             assertEquals("Trader Joe's", expense.merchant)
             assertEquals(4_287L, expense.amountMinor)
-            migrated.close()
         }
 
     @Test
-    fun `migrating 1 to 2 preserves existing categories`() =
+    fun `upgrading from version 1 preserves categories`() =
         runTest {
-            createVersion1Database()
+            createDatabaseAt(version = 1) {
+                execSQL(
+                    "INSERT INTO categories (id, name, color_index, icon_key) " +
+                        "VALUES ('cat-groceries', 'Groceries', 0, 'cart')",
+                )
+            }
 
-            val migrated = openWithRoom()
-
-            assertEquals("Groceries", migrated.categoryDao().getCategory("cat-groceries")?.name)
-            migrated.close()
+            assertEquals("Groceries", openWithRoom(UTC).categoryDao().getCategory("cat-groceries")?.name)
         }
 
     @Test
-    fun `migrating 1 to 2 adds a usable budgets table`() =
+    fun `upgrading from version 1 adds a usable budgets table`() =
         runTest {
-            createVersion1Database()
+            createDatabaseAt(version = 1)
+            val database = openWithRoom(UTC)
 
-            val migrated = openWithRoom()
-
-            // Writing and reading proves the table exists with the right columns, which a bare
-            // sqlite_master lookup would not.
-            migrated.budgetDao().upsert(
-                com.spendlens.core.database.entity.BudgetEntity(
+            database.budgetDao().upsert(
+                BudgetEntity(
                     categoryId = "cat-groceries",
-                    month = java.time.YearMonth.of(2026, 9),
+                    month = YearMonth.of(2026, 9),
                     limitMinor = 30_000,
                     currency = "USD",
                 ),
             )
 
-            val stored = migrated
-                .budgetDao()
-                .observeBudgets("2026-09")
-                .first()
-                .single()
-            assertEquals(30_000L, stored.limitMinor)
-            migrated.close()
+            assertEquals(
+                30_000L,
+                database
+                    .budgetDao()
+                    .observeBudgets("2026-09")
+                    .first()
+                    .single()
+                    .limitMinor,
+            )
         }
 
-    /** Builds a v1 database by hand, exactly as version 1 of the app would have left it. */
-    private fun createVersion1Database() {
+    // -- 2 → 3 --------------------------------------------------------------------------------------
+
+    /**
+     * The point of migration 3. 23:00 UTC on 31 August is still the 31st in London but already
+     * 1 September in Kolkata, and the stored date must be the one the user saw on their own device.
+     */
+    @Test
+    fun `migration 3 converts an instant to the calendar date in the device zone`() =
+        runTest {
+            val lateOn31stUtc = Instant.parse("2026-08-31T23:00:00Z").toEpochMilli()
+
+            // Separate files: reusing one path while the first connection is still open is how a test
+            // ends up waiting on a SQLite lock instead of failing.
+            createDatabaseAt(version = 2) { insertExpense(occurredAtMillis = lateOn31stUtc) }
+            val inKolkata = openWithRoom(ZoneId.of("Asia/Kolkata"))
+                .expenseDao()
+                .observeExpenses()
+                .first()
+                .single()
+            assertEquals(LocalDate.of(2026, 9, 1), inKolkata.occurredOn)
+
+            databaseFile = newDatabaseFile()
+            createDatabaseAt(version = 2) { insertExpense(occurredAtMillis = lateOn31stUtc) }
+            val inUtc = openWithRoom(UTC)
+                .expenseDao()
+                .observeExpenses()
+                .first()
+                .single()
+            assertEquals(LocalDate.of(2026, 8, 31), inUtc.occurredOn)
+        }
+
+    @Test
+    fun `migration 3 adds remote_version as null on existing rows`() =
+        runTest {
+            createDatabaseAt(version = 2) { insertExpense(occurredAtMillis = 1_000) }
+
+            assertNull(
+                openWithRoom(UTC)
+                    .expenseDao()
+                    .observeExpenses()
+                    .first()
+                    .single()
+                    .remoteVersion,
+            )
+        }
+
+    // -- helpers ------------------------------------------------------------------------------------
+
+    private fun newDatabaseFile(): File =
+        File.createTempFile("migration-test", ".db").apply { delete() }.also { databaseFiles += it }
+
+    /** Builds the database exactly as schema [version] left it, then lets [seed] add rows. */
+    private fun createDatabaseAt(
+        version: Int,
+        seed: SQLiteDatabase.() -> Unit = {},
+    ) {
+        val schema = JSONObject(File("$SCHEMA_DIR/$version.json").readText()).getJSONObject("database")
         SQLiteDatabase.openOrCreateDatabase(databaseFile, null).use { db ->
-            V1_DDL.forEach(db::execSQL)
-            db.execSQL(
-                """
-                INSERT INTO expenses
-                (id, merchant, amount_minor, currency, occurred_at, category_id, note,
-                 receipt_image_path, sync_state, updated_at, is_deleted)
-                VALUES ('a', 'Trader Joe''s', 4287, 'USD', 1000, 'cat-groceries', NULL,
-                        NULL, 'SYNCED', 1000, 0)
-                """.trimIndent(),
-            )
-            db.execSQL(
-                "INSERT INTO categories (id, name, color_index, icon_key) " +
-                    "VALUES ('cat-groceries', 'Groceries', 0, 'cart')",
-            )
-            // Room stores its schema fingerprint here; without it the open at v2 is treated as a
-            // fresh database and the migration never runs.
-            db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY, identity_hash TEXT)")
-            db.execSQL("INSERT OR REPLACE INTO room_master_table (id, identity_hash) VALUES (42, '$V1_IDENTITY_HASH')")
-            db.version = 1
+            val entities = schema.getJSONArray("entities")
+            for (i in 0 until entities.length()) {
+                val entity = entities.getJSONObject(i)
+                val table = entity.getString("tableName")
+                db.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", table))
+                entity.optJSONArray("indices")?.let { indices ->
+                    for (j in 0 until indices.length()) {
+                        db.execSQL(indices.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}", table))
+                    }
+                }
+            }
+            // Room's schema fingerprint; without it the open treats this as a brand-new database and
+            // no migration runs at all.
+            val setup = schema.getJSONArray("setupQueries")
+            for (i in 0 until setup.length()) db.execSQL(setup.getString(i))
+            db.seed()
+            db.version = version
         }
     }
 
-    private fun openWithRoom(): SpendLensDatabase =
+    /** Pre-v3 row: `occurred_at` is epoch milliseconds and there is no `remote_version` column. */
+    private fun SQLiteDatabase.insertExpense(occurredAtMillis: Long) {
+        execSQL(
+            """
+            INSERT INTO expenses
+            (id, merchant, amount_minor, currency, occurred_at, category_id, note,
+             receipt_image_path, sync_state, updated_at, is_deleted)
+            VALUES ('a', 'Trader Joe''s', 4287, 'USD', $occurredAtMillis, 'cat-groceries', NULL,
+                    NULL, 'SYNCED', 1000, 0)
+            """.trimIndent(),
+        )
+    }
+
+    private fun openWithRoom(zoneId: ZoneId): SpendLensDatabase =
         Room
             .databaseBuilder(
                 ApplicationProvider.getApplicationContext(),
                 SpendLensDatabase::class.java,
                 databaseFile.absolutePath,
-            ).build()
+            ).addSpendLensMigrations(zoneId)
+            .build()
+            .also { openDatabases += it }
 
     private companion object {
-        const val V1_IDENTITY_HASH = "ddbf944caac044144c17774171211db5"
-
-        /** Copied verbatim from `schemas/com.spendlens.core.database.SpendLensDatabase/1.json`. */
-        val V1_DDL = listOf(
-            "CREATE TABLE IF NOT EXISTS `expenses` (`id` TEXT NOT NULL, `merchant` TEXT NOT NULL, " +
-                "`amount_minor` INTEGER NOT NULL, `currency` TEXT NOT NULL, `occurred_at` INTEGER NOT NULL, " +
-                "`category_id` TEXT NOT NULL, `note` TEXT, `receipt_image_path` TEXT, " +
-                "`sync_state` TEXT NOT NULL, `updated_at` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, " +
-                "PRIMARY KEY(`id`))",
-            "CREATE INDEX IF NOT EXISTS `index_expenses_occurred_at` ON `expenses` (`occurred_at`)",
-            "CREATE INDEX IF NOT EXISTS `index_expenses_sync_state` ON `expenses` (`sync_state`)",
-            "CREATE INDEX IF NOT EXISTS `index_expenses_category_id` ON `expenses` (`category_id`)",
-            "CREATE TABLE IF NOT EXISTS `categories` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
-                "`color_index` INTEGER NOT NULL, `icon_key` TEXT NOT NULL, PRIMARY KEY(`id`))",
-        )
+        const val SCHEMA_DIR = "schemas/com.spendlens.core.database.SpendLensDatabase"
+        val UTC: ZoneId = ZoneId.of("UTC")
     }
 }

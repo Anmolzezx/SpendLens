@@ -1,20 +1,15 @@
 package com.spendlens.core.model
 
 import java.time.YearMonth
-import java.time.ZoneId
 
 /**
  * Whether this expense falls in [month].
  *
- * **[zoneId] changes the answer**, and that is a real modelling problem rather than a quirk of this
- * function. `occurredAt` is an `Instant`, so an expense recorded at 23:00 UTC on 31 August lands in
- * September for anyone east of UTC. See the open question in DECISIONS.md — if `occurredAt` becomes
- * a `LocalDate`, this parameter disappears and the ambiguity with it.
+ * This used to take a `ZoneId`, because the answer depended on one: `occurredAt` was an instant, and
+ * an expense at 23:00 UTC on 31 August belonged to September east of UTC. Making the date a
+ * `LocalDate` removed the parameter and the ambiguity together.
  */
-fun Expense.occurredIn(
-    month: YearMonth,
-    zoneId: ZoneId,
-): Boolean = YearMonth.from(occurredAt.atZone(zoneId)) == month
+fun Expense.occurredIn(month: YearMonth): Boolean = YearMonth.from(occurredOn) == month
 
 /**
  * Spend per category for one month, tombstones excluded.
@@ -25,12 +20,11 @@ fun Expense.occurredIn(
 fun monthlySpendByCategory(
     expenses: List<Expense>,
     month: YearMonth,
-    zoneId: ZoneId,
 ): Map<String, Long> =
     expenses
         .asSequence()
         .filterNot { it.isDeleted }
-        .filter { it.occurredIn(month, zoneId) }
+        .filter { it.occurredIn(month) }
         .groupingBy { it.categoryId }
         .fold(0L) { sum, expense -> sum + expense.amountMinor }
 
@@ -38,12 +32,11 @@ fun monthlySpendByCategory(
 fun monthlyTotalMinor(
     expenses: List<Expense>,
     month: YearMonth,
-    zoneId: ZoneId,
 ): Long =
     expenses
         .asSequence()
         .filterNot { it.isDeleted }
-        .filter { it.occurredIn(month, zoneId) }
+        .filter { it.occurredIn(month) }
         .sumOf { it.amountMinor }
 
 /**
@@ -57,9 +50,8 @@ fun categorySpend(
     expenses: List<Expense>,
     budgets: List<Budget>,
     month: YearMonth,
-    zoneId: ZoneId,
 ): List<CategorySpend> {
-    val spend = monthlySpendByCategory(expenses, month, zoneId)
+    val spend = monthlySpendByCategory(expenses, month)
     val budgetByCategory = budgets.filter { it.month == month }.associateBy { it.categoryId }
 
     return (spend.keys + budgetByCategory.keys)

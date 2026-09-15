@@ -22,6 +22,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Locale
@@ -124,8 +125,8 @@ class ExpenseListViewModelTest {
         runTest {
             val repository = TestExpenseRepository(
                 listOf(
-                    expense(id = "thisMonth", amountMinor = 1_000, occurredAt = Instant.parse("2026-08-10T10:00:00Z")),
-                    expense(id = "lastMonth", amountMinor = 9_999, occurredAt = Instant.parse("2026-07-10T10:00:00Z")),
+                    expense(id = "thisMonth", amountMinor = 1_000, occurredOn = LocalDate.parse("2026-08-10")),
+                    expense(id = "lastMonth", amountMinor = 9_999, occurredOn = LocalDate.parse("2026-07-10")),
                 ),
             )
             val viewModel = viewModel(repository)
@@ -168,14 +169,14 @@ class ExpenseListViewModelTest {
     private fun expense(
         id: String,
         amountMinor: Long = 1_000,
-        occurredAt: Instant = Instant.parse("2026-08-15T12:00:00Z"),
+        occurredOn: LocalDate = LocalDate.parse("2026-08-15"),
         syncState: SyncState = SyncState.SYNCED,
     ) = Expense(
         id = id,
         merchant = "Merchant $id",
         amountMinor = amountMinor,
         currency = "USD",
-        occurredAt = occurredAt,
+        occurredOn = occurredOn,
         categoryId = DefaultCategories.groceries.id,
         note = null,
         receiptImagePath = null,

@@ -60,15 +60,16 @@ class ExpenseListViewModel
                 return ExpenseListUiState.Empty(hasActiveFilters = false)
             }
 
+            // The zone is still needed here, but only to know what "this month" is right now —
+            // not to decide which month an expense belongs to.
             val thisMonth = YearMonth.now(clock.withZone(zoneId))
-            val monthTotal = monthlyTotalMinor(expenses, thisMonth, zoneId)
+            val monthTotal = monthlyTotalMinor(expenses, thisMonth)
 
             return ExpenseListUiState.Success(
                 expenses = expenses
                     .map { expense ->
                         expense.toUiModel(
                             category = categories[expense.categoryId],
-                            zoneId = zoneId,
                             locale = locale,
                         )
                     }.toImmutableList(),

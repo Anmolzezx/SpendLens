@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.ZoneId
 import java.util.Locale
 import javax.inject.Inject
 
@@ -27,7 +26,6 @@ class ExpenseDetailViewModel
         private val expenseRepository: ExpenseRepository,
         categoryRepository: CategoryRepository,
         private val receiptImageStore: ReceiptImageStore,
-        private val zoneId: ZoneId,
         private val locale: Locale,
     ) : ViewModel() {
         /**
@@ -48,7 +46,6 @@ class ExpenseDetailViewModel
                     ExpenseDetailUiState.Success(
                         expense.toDetailUiModel(
                             category = categories.associateBy(Category::id)[expense.categoryId],
-                            zoneId = zoneId,
                             locale = locale,
                             // Rows store paths relative to filesDir; only ReceiptImageStore knows
                             // how to turn one back into a file, so the rule lives in one place.

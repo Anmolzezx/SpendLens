@@ -42,7 +42,7 @@ class InsightsViewModel
 
         val uiState: StateFlow<InsightsUiState> =
             combine(
-                expenseRepository.observeExpensesIn(month, zoneId),
+                expenseRepository.observeExpensesIn(month),
                 categoryRepository.observeCategories(),
                 budgetRepository.observeBudgets(month),
             ) { expenses, categories, budgets ->
@@ -59,7 +59,7 @@ class InsightsViewModel
             budgets: List<Budget>,
         ): InsightsUiState {
             val currentMonth = month
-            val totalMinor = monthlyTotalMinor(expenses, currentMonth, zoneId)
+            val totalMinor = monthlyTotalMinor(expenses, currentMonth)
             if (totalMinor == 0L) return InsightsUiState.Empty
 
             val currency = expenses.first().currency
@@ -67,7 +67,6 @@ class InsightsViewModel
                 expenses = expenses,
                 budgets = budgets,
                 month = currentMonth,
-                zoneId = zoneId,
             )
 
             return InsightsUiState.Success(

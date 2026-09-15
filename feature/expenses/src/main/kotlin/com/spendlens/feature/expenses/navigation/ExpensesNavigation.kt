@@ -38,7 +38,8 @@ data class ExpenseEditRoute(
     val expenseId: String? = null,
     val merchant: String? = null,
     val amountMinor: Long? = null,
-    val occurredAtMillis: Long? = null,
+    /** A calendar date as an epoch day; routes carry primitives, and a day is all the date needs. */
+    val occurredOnEpochDay: Long? = null,
     val receiptImagePath: String? = null,
 )
 

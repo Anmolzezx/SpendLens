@@ -5,6 +5,7 @@ import com.spendlens.core.model.Category
 import com.spendlens.core.model.Expense
 import com.spendlens.core.model.SyncState
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
 
 /**
@@ -15,7 +16,8 @@ import java.time.YearMonth
  *
  *  - **The dates are fixed, not relative to `now()`.** Paparazzi diffs pixels, so a fixture that says
  *    "three days ago" produces a different screenshot every day and every run fails. Everything here
- *    sits in August 2026.
+ *    sits in August 2026. Several rows share a day on purpose, which is normal for a real ledger and
+ *    exercises the secondary sort on `updatedAt`.
  *  - **The rows are awkward on purpose.** A 44-character merchant name, a $2,400 amount next to a
  *    $1.99 one, null notes, missing receipts, and all three sync states. Uniform, tidy fake data
  *    makes a broken layout look fine.
@@ -46,7 +48,7 @@ object SampleExpenses {
             id = "exp-01",
             merchant = "Trader Joe's",
             amountMinor = 4_287,
-            occurredAt = "2026-08-26T18:42:00Z",
+            occurredOn = "2026-08-26",
             category = SampleCategories.groceries,
             receiptImagePath = "receipts/exp-01.jpg",
         ),
@@ -55,7 +57,7 @@ object SampleExpenses {
             id = "exp-02",
             merchant = "Sri Venkateswara Supermarket & General Store",
             amountMinor = 12_650,
-            occurredAt = "2026-08-25T11:15:00Z",
+            occurredOn = "2026-08-25",
             category = SampleCategories.groceries,
             note = "Monthly stock-up",
             receiptImagePath = "receipts/exp-02.jpg",
@@ -66,21 +68,21 @@ object SampleExpenses {
             id = "exp-03",
             merchant = "Blue Bottle Coffee",
             amountMinor = 675,
-            occurredAt = "2026-08-25T08:03:00Z",
+            occurredOn = "2026-08-25",
             category = SampleCategories.dining,
         ),
         expense(
             id = "exp-04",
             merchant = "Uber",
             amountMinor = 1_840,
-            occurredAt = "2026-08-24T22:47:00Z",
+            occurredOn = "2026-08-24",
             category = SampleCategories.transport,
         ),
         expense(
             id = "exp-05",
             merchant = "Con Edison",
             amountMinor = 14_320,
-            occurredAt = "2026-08-24T09:00:00Z",
+            occurredOn = "2026-08-24",
             category = SampleCategories.utilities,
             note = "August electricity",
         ),
@@ -89,7 +91,7 @@ object SampleExpenses {
             id = "exp-06",
             merchant = "Amazon",
             amountMinor = 240_000,
-            occurredAt = "2026-08-23T15:22:00Z",
+            occurredOn = "2026-08-23",
             category = SampleCategories.shopping,
             note = "Standing desk + monitor arm",
             syncState = SyncState.CONFLICT,
@@ -99,7 +101,7 @@ object SampleExpenses {
             id = "exp-07",
             merchant = "Shell",
             amountMinor = 5_210,
-            occurredAt = "2026-08-22T07:38:00Z",
+            occurredOn = "2026-08-22",
             category = SampleCategories.transport,
         ),
         expense(
@@ -107,7 +109,7 @@ object SampleExpenses {
             id = "exp-08",
             merchant = "CVS Pharmacy",
             amountMinor = 199,
-            occurredAt = "2026-08-22T19:05:00Z",
+            occurredOn = "2026-08-22",
             category = SampleCategories.health,
             syncState = SyncState.PENDING,
             updatedAt = "2026-08-22T19:05:00Z",
@@ -116,14 +118,14 @@ object SampleExpenses {
             id = "exp-09",
             merchant = "Chipotle",
             amountMinor = 1_495,
-            occurredAt = "2026-08-21T12:30:00Z",
+            occurredOn = "2026-08-21",
             category = SampleCategories.dining,
         ),
         expense(
             id = "exp-10",
             merchant = "Spotify",
             amountMinor = 1_199,
-            occurredAt = "2026-08-20T06:00:00Z",
+            occurredOn = "2026-08-20",
             category = SampleCategories.shopping,
             note = "Monthly subscription",
         ),
@@ -131,7 +133,7 @@ object SampleExpenses {
             id = "exp-11",
             merchant = "Whole Foods Market",
             amountMinor = 8_734,
-            occurredAt = "2026-08-19T17:55:00Z",
+            occurredOn = "2026-08-19",
             category = SampleCategories.groceries,
             receiptImagePath = "receipts/exp-11.jpg",
         ),
@@ -139,7 +141,7 @@ object SampleExpenses {
             id = "exp-12",
             merchant = "MTA MetroCard",
             amountMinor = 3_300,
-            occurredAt = "2026-08-18T08:12:00Z",
+            occurredOn = "2026-08-18",
             category = SampleCategories.transport,
         ),
         expense(
@@ -147,7 +149,7 @@ object SampleExpenses {
             id = "exp-13",
             merchant = "Dr. Patel — Dental Associates",
             amountMinor = 22_500,
-            occurredAt = "2026-08-17T14:00:00Z",
+            occurredOn = "2026-08-17",
             category = SampleCategories.health,
             note = "Routine cleaning. Insurance reimbursement still pending as of the 26th.",
             receiptImagePath = "receipts/exp-13.jpg",
@@ -158,14 +160,14 @@ object SampleExpenses {
             id = "exp-14",
             merchant = "Starbucks",
             amountMinor = 585,
-            occurredAt = "2026-08-17T09:21:00Z",
+            occurredOn = "2026-08-17",
             category = SampleCategories.dining,
         ),
         expense(
             id = "exp-15",
             merchant = "IKEA",
             amountMinor = 45_990,
-            occurredAt = "2026-08-15T13:44:00Z",
+            occurredOn = "2026-08-15",
             category = SampleCategories.shopping,
             receiptImagePath = "receipts/exp-15.jpg",
         ),
@@ -173,7 +175,7 @@ object SampleExpenses {
             id = "exp-16",
             merchant = "Verizon Wireless",
             amountMinor = 9_500,
-            occurredAt = "2026-08-14T10:00:00Z",
+            occurredOn = "2026-08-14",
             category = SampleCategories.utilities,
         ),
         expense(
@@ -181,7 +183,7 @@ object SampleExpenses {
             id = "exp-17",
             merchant = "Local Farmers Market",
             amountMinor = 2_150,
-            occurredAt = "2026-08-13T10:30:00Z",
+            occurredOn = "2026-08-13",
             category = SampleCategories.groceries,
             syncState = SyncState.PENDING,
             updatedAt = "2026-08-13T10:30:00Z",
@@ -190,7 +192,7 @@ object SampleExpenses {
             id = "exp-18",
             merchant = "Delta Air Lines",
             amountMinor = 187_400,
-            occurredAt = "2026-08-10T20:15:00Z",
+            occurredOn = "2026-08-10",
             category = SampleCategories.transport,
             note = "SFO → JFK, work trip, reimbursable",
             receiptImagePath = "receipts/exp-18.jpg",
@@ -205,7 +207,7 @@ object SampleExpenses {
         id = "exp-19",
         merchant = "Duplicate — Trader Joe's",
         amountMinor = 4_287,
-        occurredAt = "2026-08-26T18:43:00Z",
+        occurredOn = "2026-08-26",
         category = SampleCategories.groceries,
         updatedAt = "2026-08-26T19:10:00Z",
         isDeleted = true,
@@ -240,19 +242,19 @@ private fun expense(
     id: String,
     merchant: String,
     amountMinor: Long,
-    occurredAt: String,
+    occurredOn: String,
     category: Category,
     note: String? = null,
     receiptImagePath: String? = null,
     syncState: SyncState = SyncState.SYNCED,
-    updatedAt: String = occurredAt,
+    updatedAt: String = "${occurredOn}T12:00:00Z",
     isDeleted: Boolean = false,
 ) = Expense(
     id = id,
     merchant = merchant,
     amountMinor = amountMinor,
     currency = SAMPLE_CURRENCY,
-    occurredAt = Instant.parse(occurredAt),
+    occurredOn = LocalDate.parse(occurredOn),
     categoryId = category.id,
     note = note,
     receiptImagePath = receiptImagePath,

@@ -68,7 +68,7 @@ class SeedCategoriesCallbackTest {
                     merchant = "Trader Joe's",
                     amountMinor = 4_287,
                     currency = "USD",
-                    occurredAt = Instant.parse("2026-08-26T18:42:00Z"),
+                    occurredOn = java.time.LocalDate.parse("2026-08-26"),
                     categoryId = DefaultCategories.groceries.id,
                     note = null,
                     receiptImagePath = null,

@@ -88,7 +88,7 @@ class MoneyTest {
             merchant = "Merchant",
             amountMinor = amountMinor,
             currency = "USD",
-            occurredAt = java.time.Instant.EPOCH,
+            occurredOn = java.time.LocalDate.of(2026, 8, 1),
             categoryId = "cat",
             note = null,
             receiptImagePath = null,
