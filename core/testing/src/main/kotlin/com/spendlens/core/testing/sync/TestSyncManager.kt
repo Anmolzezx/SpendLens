@@ -10,7 +10,14 @@ class TestSyncManager : SyncManager {
     var requestCount = 0
         private set
 
+    var syncNowCount = 0
+        private set
+
     override suspend fun requestSync() {
         requestCount++
+    }
+
+    override suspend fun syncNow() {
+        syncNowCount++
     }
 }

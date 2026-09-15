@@ -19,11 +19,13 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.IOException
 
 /**
  * How requests turn into queued work, against WorkManager's own test implementation — real queueing
@@ -105,6 +107,54 @@ class WorkManagerSyncManagerTest {
                 listOf(WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED),
                 syncWork().map { it.state }.sortedBy { it.ordinal },
             )
+            finishRunningSync.complete(SyncReport())
+            awaitState(running, WorkInfo.State.SUCCEEDED)
+        }
+
+    // -- sync now -------------------------------------------------------------------------------------
+
+    @Test
+    fun `sync now starts a sync when none is queued`() =
+        runTest {
+            syncManager.syncNow()
+
+            assertEquals(listOf(WorkInfo.State.ENQUEUED), syncWork().map { it.state })
+        }
+
+    /** A sync that failed is waiting out its backoff; the user pressing the button should not have to. */
+    @Test
+    fun `sync now replaces a sync that is waiting to retry`() =
+        runTest {
+            sync = { throw IOException("offline") }
+            syncManager.requestSync()
+            val failing = syncWork().single().id
+            WorkManagerTestInitHelper.getTestDriver(context)!!.setAllConstraintsMet(failing)
+            withContext(Dispatchers.Default) {
+                withTimeout(WORKER_TIMEOUT_MS) {
+                    workManager.getWorkInfoByIdFlow(failing).first { it?.runAttemptCount == 1 }
+                }
+            }
+
+            syncManager.syncNow()
+
+            val replacement = syncWork().single { it.state == WorkInfo.State.ENQUEUED }
+            assertNotEquals(failing, replacement.id)
+            assertEquals(0, replacement.runAttemptCount)
+        }
+
+    @Test
+    fun `sync now leaves a running sync alone`() =
+        runTest {
+            val finishRunningSync = CompletableDeferred<SyncReport>()
+            sync = { finishRunningSync.await() }
+            syncManager.requestSync()
+            val running = syncWork().single().id
+            WorkManagerTestInitHelper.getTestDriver(context)!!.setAllConstraintsMet(running)
+            awaitState(running, WorkInfo.State.RUNNING)
+
+            syncManager.syncNow()
+
+            assertEquals(listOf(running to WorkInfo.State.RUNNING), syncWork().map { it.id to it.state })
             finishRunningSync.complete(SyncReport())
             awaitState(running, WorkInfo.State.SUCCEEDED)
         }

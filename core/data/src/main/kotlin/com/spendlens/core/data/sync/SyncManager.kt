@@ -17,4 +17,11 @@ interface SyncManager {
      * run — the write that called this must never wait on the network.
      */
     suspend fun requestSync()
+
+    /**
+     * The user asked for a sync. Unlike [requestSync], this does not wait out a retry backoff: a sync
+     * sitting out a failure starts again straight away. A sync already running is left alone —
+     * interrupting one mid-upload could record the upload as never having happened.
+     */
+    suspend fun syncNow()
 }

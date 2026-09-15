@@ -54,18 +54,33 @@ internal class WorkManagerSyncManager
 
         override suspend fun requestSync() =
             mutex.withLock {
-                val existing = workManager.getWorkInfosForUniqueWorkFlow(SYNC_WORK_NAME).first()
-                if (!existing.map { it.state }.hasSyncWaitingToStart()) {
-                    workManager
-                        .enqueueUniqueWork(
-                            SYNC_WORK_NAME,
-                            ExistingWorkPolicy.APPEND_OR_REPLACE,
-                            SyncWorker.oneTimeRequest(),
-                        )
-                        // Awaited so the next request's check sees this one.
-                        .await()
+                if (!syncStates().hasSyncWaitingToStart()) enqueue(ExistingWorkPolicy.APPEND_OR_REPLACE)
+            }
+
+        /**
+         * - **Running:** leave it. Cancelling a sync between the server accepting an upload and the
+         *   device recording that would make the next pass look like a conflict with itself.
+         * - **Waiting:** replace it. It may be sitting out minutes of retry backoff, and the user asked now.
+         *   A waiting sync has read nothing yet, so replacing it loses nothing.
+         * - **Nothing queued:** start one.
+         */
+        override suspend fun syncNow() =
+            mutex.withLock {
+                val states = syncStates()
+                when {
+                    WorkInfo.State.RUNNING in states -> Unit
+                    states.hasSyncWaitingToStart() -> enqueue(ExistingWorkPolicy.REPLACE)
+                    else -> enqueue(ExistingWorkPolicy.APPEND_OR_REPLACE)
                 }
             }
+
+        private suspend fun syncStates(): List<WorkInfo.State> =
+            workManager.getWorkInfosForUniqueWorkFlow(SYNC_WORK_NAME).first().map { it.state }
+
+        /** Awaited, so the next request's check sees this one. */
+        private suspend fun enqueue(policy: ExistingWorkPolicy) {
+            workManager.enqueueUniqueWork(SYNC_WORK_NAME, policy, SyncWorker.oneTimeRequest()).await()
+        }
 
         /**
          * Called once at launch. `KEEP` is right here, unlike in [requestSync]: nothing has been saved
