@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.time.Clock
 import javax.inject.Inject
 
 /**
@@ -41,6 +42,7 @@ class ExpenseSynchronizer
         private val cursorDao: SyncCursorDao,
         private val transaction: DatabaseTransactionRunner,
         private val network: SpendLensNetworkDataSource,
+        private val clock: Clock,
         @param:Dispatcher(SpendLensDispatcher.IO)
         private val ioDispatcher: CoroutineDispatcher,
     ) : Synchronizer {
@@ -83,14 +85,23 @@ class ExpenseSynchronizer
 
         private suspend fun pull(): SyncReport {
             var report = SyncReport()
-            var cursor = cursorDao.getCursor(EXPENSES_STREAM) ?: 0L
+            val previous = cursorDao.getSyncCursor(EXPENSES_SYNC_STREAM)
+            var cursor = previous?.cursor ?: 0L
             do {
                 val page = network.pullExpenses(since = cursor, limit = PULL_PAGE_SIZE)
                 // The page and the cursor commit together. A crash can lose the whole page, which
                 // the next sync downloads again, but never the page without the cursor or the reverse.
                 transaction {
                     page.changes.forEach { report += applyRemote(it) }
-                    cursorDao.upsert(SyncCursorEntity(stream = EXPENSES_STREAM, cursor = page.nextCursor))
+                    cursorDao.upsert(
+                        SyncCursorEntity(
+                            stream = EXPENSES_SYNC_STREAM,
+                            cursor = page.nextCursor,
+                            // Stamped only with the final page: before that, this device is not yet up to
+                            // date, and "last synced" must not say it is.
+                            lastSyncedAt = if (page.hasMore) previous?.lastSyncedAt else clock.instant(),
+                        ),
+                    )
                 }
                 cursor = page.nextCursor
             } while (page.hasMore)
@@ -156,8 +167,6 @@ class ExpenseSynchronizer
         }
 
         private companion object {
-            const val EXPENSES_STREAM = "expenses"
-
             /** Below every real version, which starts at 1. */
             const val NEVER_SYNCED = 0L
             const val PUSH_BATCH_SIZE = 50

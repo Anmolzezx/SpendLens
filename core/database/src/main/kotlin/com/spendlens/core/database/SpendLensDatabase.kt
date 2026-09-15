@@ -29,7 +29,7 @@ import com.spendlens.core.database.entity.SyncCursorEntity
         ExpenseConflictEntity::class,
         SyncCursorEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     // Adding a table is purely additive, so Room can derive the migration from the exported
     // schemas. A change that renames or retypes a column could not be auto-migrated and would need
@@ -37,8 +37,12 @@ import com.spendlens.core.database.entity.SyncCursorEntity
     // the point. There is deliberately no destructive fallback, so a missing migration crashes.
     // 1 → 2 is automatic (a new table). 2 → 3 changes what a column's values mean, which no
     // schema diff can express, so it is hand-written — see migration/Migration2To3.kt.
-    // 3 → 4 is automatic again: two new tables for sync.
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 3, to = 4)],
+    // 3 → 4 is automatic again: two new tables for sync. 4 → 5 adds a nullable column, also automatic.
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
+    ],
 )
 @TypeConverters(Converters::class)
 abstract class SpendLensDatabase : RoomDatabase() {

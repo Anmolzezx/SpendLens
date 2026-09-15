@@ -33,6 +33,12 @@ class FakeSpendLensServer : SpendLensNetworkDataSource {
     /** When set, the next request of either kind fails before the server does anything. */
     var failNextRequest = false
 
+    /**
+     * When set, pulls fail once [pullCursors] holds this many — a connection lost part-way through
+     * paging. Counts every device's pulls; clear [pullCursors] first to count from zero.
+     */
+    var failPullAfter: Int? = null
+
     /** When set, the next push is **applied** but its response never arrives. */
     var loseNextPushResponse = false
 
@@ -61,6 +67,9 @@ class FakeSpendLensServer : SpendLensNetworkDataSource {
     ): NetworkChangePage =
         mutex.withLock {
             failIfRequested()
+            failPullAfter?.let { allowed ->
+                if (pullCursors.size >= allowed) throw IOException("Connection lost while paging")
+            }
             pullCursors += since
             // Every stored record has a version; write() assigns one before storing.
             val newer = records.values.filter { (it.version ?: 0) > since }.sortedBy { it.version }

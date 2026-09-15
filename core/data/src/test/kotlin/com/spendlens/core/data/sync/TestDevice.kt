@@ -56,8 +56,11 @@ internal class TestDevice(
         cursorDao = database.syncCursorDao(),
         transaction = transaction,
         network = server,
+        clock = clock,
         ioDispatcher = dispatcher,
     )
+
+    val syncStatus = OfflineFirstSyncStatusRepository(database.syncCursorDao())
 
     suspend fun sync(): SyncReport = synchronizer.sync()
 

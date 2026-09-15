@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -149,6 +150,55 @@ class ExpenseSynchronizerTest {
             letFirstFinish.complete(Unit)
             joinAll(first, second)
             assertEquals(2, server.pullCursors.size)
+        }
+
+    // -- last synced --------------------------------------------------------------------------------
+
+    @Test
+    fun `a completed sync records when it finished`() =
+        runTest {
+            assertNull(phone.syncStatus.observeLastSyncedAt().first())
+            phone.expenses.upsert(expense("a"))
+
+            phone.sync()
+
+            assertNotNull(phone.syncStatus.observeLastSyncedAt().first())
+        }
+
+    /** "Last synced" is a promise that this device was up to date then. A failed pass must not renew it. */
+    @Test
+    fun `a failed sync leaves the last synced time where it was`() =
+        runTest {
+            phone.sync()
+            val lastGood = phone.syncStatus.observeLastSyncedAt().first()
+            phone.expenses.upsert(expense("a"))
+            server.failNextRequest = true
+
+            runCatching { phone.sync() }
+
+            assertEquals(lastGood, phone.syncStatus.observeLastSyncedAt().first())
+        }
+
+    /** Half-way through a long download this device is not up to date yet, however far it has got. */
+    @Test
+    fun `the time is only recorded once every page is in`() =
+        runTest {
+            repeat(3) { tablet.expenses.upsert(expense("e$it")) }
+            tablet.sync()
+            server.maxPageSize = 1
+            server.pullCursors.clear()
+            server.failPullAfter = 1
+
+            runCatching { phone.sync() }
+
+            assertEquals(
+                1,
+                phone.expenses
+                    .observeExpenses()
+                    .first()
+                    .size,
+            )
+            assertNull(phone.syncStatus.observeLastSyncedAt().first())
         }
 
     // -- download -----------------------------------------------------------------------------------

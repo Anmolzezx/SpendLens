@@ -9,6 +9,8 @@ import com.spendlens.core.data.repository.OfflineFirstCategoryRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseConflictRepository
 import com.spendlens.core.data.repository.OfflineFirstExpenseRepository
 import com.spendlens.core.data.sync.ExpenseSynchronizer
+import com.spendlens.core.data.sync.OfflineFirstSyncStatusRepository
+import com.spendlens.core.data.sync.SyncStatusRepository
 import com.spendlens.core.data.sync.Synchronizer
 import dagger.Binds
 import dagger.Module
@@ -44,4 +46,7 @@ internal abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindsSynchronizer(impl: ExpenseSynchronizer): Synchronizer
+
+    @Binds
+    abstract fun bindsSyncStatusRepository(impl: OfflineFirstSyncStatusRepository): SyncStatusRepository
 }

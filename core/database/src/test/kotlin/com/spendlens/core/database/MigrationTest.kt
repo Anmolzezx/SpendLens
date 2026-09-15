@@ -185,8 +185,24 @@ class MigrationTest {
             )
 
             assertEquals(LocalDate.of(2026, 9, 15), database.expenseDao().getExpense("a")?.occurredOn)
-            assertEquals(41L, database.syncCursorDao().getCursor("expenses"))
+            assertEquals(41L, database.syncCursorDao().getSyncCursor("expenses")?.cursor)
             assertEquals(5_000L, database.expenseConflictDao().getConflict("a")?.amountMinor)
+        }
+
+    // -- 4 → 5 --------------------------------------------------------------------------------------
+
+    /** A device that synced before this version keeps its cursor, and simply has no sync time yet. */
+    @Test
+    fun `upgrading from version 4 keeps the cursor and adds an empty last-synced time`() =
+        runTest {
+            createDatabaseAt(version = 4) {
+                execSQL("INSERT INTO sync_cursors (stream, cursor) VALUES ('expenses', 41)")
+            }
+
+            val cursor = openWithRoom(UTC).syncCursorDao().getSyncCursor("expenses")
+
+            assertEquals(41L, cursor?.cursor)
+            assertNull(cursor?.lastSyncedAt)
         }
 
     // -- helpers ------------------------------------------------------------------------------------
