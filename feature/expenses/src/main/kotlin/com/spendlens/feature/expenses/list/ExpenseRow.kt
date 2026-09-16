@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.spendlens.core.designsystem.animation.sharedBoundsWith
 import com.spendlens.core.designsystem.component.AmountEmphasis
 import com.spendlens.core.designsystem.component.AmountText
 import com.spendlens.core.designsystem.component.CategoryChip
@@ -26,6 +27,8 @@ import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Tone
 import com.spendlens.core.model.SyncState
 import com.spendlens.feature.expenses.R
+import com.spendlens.feature.expenses.amountSharedKey
+import com.spendlens.feature.expenses.merchantSharedKey
 
 @Composable
 internal fun ExpenseRow(
@@ -50,6 +53,7 @@ internal fun ExpenseRow(
         ) {
             Text(
                 text = expense.merchant,
+                modifier = Modifier.sharedBoundsWith(merchantSharedKey(expense.id)),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -79,6 +83,7 @@ internal fun ExpenseRow(
         ) {
             AmountText(
                 amount = expense.formattedAmount,
+                modifier = Modifier.sharedBoundsWith(amountSharedKey(expense.id)),
                 emphasis = AmountEmphasis.MEDIUM,
                 color = MaterialTheme.colorScheme.onSurface,
             )

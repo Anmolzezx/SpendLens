@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import coil3.compose.SubcomposeAsyncImage
+import com.spendlens.core.designsystem.animation.sharedBoundsWith
 import com.spendlens.core.designsystem.component.AmountEmphasis
 import com.spendlens.core.designsystem.component.AmountText
 import com.spendlens.core.designsystem.component.CategoryChip
@@ -39,6 +40,8 @@ import com.spendlens.core.designsystem.theme.SpendLensTheme
 import com.spendlens.core.designsystem.theme.Tone
 import com.spendlens.core.model.SyncState
 import com.spendlens.feature.expenses.R
+import com.spendlens.feature.expenses.amountSharedKey
+import com.spendlens.feature.expenses.merchantSharedKey
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,11 +116,13 @@ private fun ExpenseDetail(
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
             Text(
                 text = expense.merchant,
+                modifier = Modifier.sharedBoundsWith(merchantSharedKey(expense.id)),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             AmountText(
                 amount = expense.formattedAmount,
+                modifier = Modifier.sharedBoundsWith(amountSharedKey(expense.id)),
                 emphasis = AmountEmphasis.LARGE,
                 color = MaterialTheme.colorScheme.onSurface,
             )

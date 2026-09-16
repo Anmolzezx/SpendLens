@@ -1,10 +1,14 @@
 package com.spendlens.feature.expenses.navigation
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import com.spendlens.core.designsystem.animation.LocalNavAnimatedVisibilityScope
 import com.spendlens.feature.expenses.conflict.ExpenseConflictScreen
 import com.spendlens.feature.expenses.detail.ExpenseDetailScreen
 import com.spendlens.feature.expenses.edit.ExpenseEditScreen
@@ -67,22 +71,27 @@ fun NavGraphBuilder.expensesGraph(
 ) {
     navigation<ExpensesGraph>(startDestination = ExpenseListRoute) {
         composable<ExpenseListRoute> {
-            ExpenseListScreen(
-                onExpenseClick = { id -> navController.navigate(ExpenseDetailRoute(id)) },
-                onReviewConflictClick = { id -> navController.navigate(ExpenseConflictRoute(id)) },
-                onAddExpenseClick = { navController.navigate(ExpenseEditRoute()) },
-                // The one genuinely cross-feature edge, and the only one handed upward.
-                onScanReceiptClick = onNavigateToCapture,
-            )
+            // `this` is the destination's AnimatedContentScope: the other half of a shared element.
+            ProvideNavAnimatedVisibilityScope {
+                ExpenseListScreen(
+                    onExpenseClick = { id -> navController.navigate(ExpenseDetailRoute(id)) },
+                    onReviewConflictClick = { id -> navController.navigate(ExpenseConflictRoute(id)) },
+                    onAddExpenseClick = { navController.navigate(ExpenseEditRoute()) },
+                    // The one genuinely cross-feature edge, and the only one handed upward.
+                    onScanReceiptClick = onNavigateToCapture,
+                )
+            }
         }
         composable<ExpenseDetailRoute> {
             // The route arguments are read by the ViewModel from its SavedStateHandle now, so the
             // graph no longer threads them through the composable signature.
-            ExpenseDetailScreen(
-                onBack = { navController.popBackStack() },
-                onEditClick = { id -> navController.navigate(ExpenseEditRoute(id)) },
-                onReviewConflictClick = { id -> navController.navigate(ExpenseConflictRoute(id)) },
-            )
+            ProvideNavAnimatedVisibilityScope {
+                ExpenseDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onEditClick = { id -> navController.navigate(ExpenseEditRoute(id)) },
+                    onReviewConflictClick = { id -> navController.navigate(ExpenseConflictRoute(id)) },
+                )
+            }
         }
         composable<ExpenseConflictRoute> {
             ExpenseConflictScreen(
@@ -101,4 +110,13 @@ fun NavGraphBuilder.expensesGraph(
             )
         }
     }
+}
+
+/**
+ * Hands this destination's [AnimatedVisibilityScope] to the screens inside it, so a shared element can
+ * find both halves of what it needs without every screen taking animation parameters.
+ */
+@Composable
+private fun AnimatedVisibilityScope.ProvideNavAnimatedVisibilityScope(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this, content = content)
 }
