@@ -1,9 +1,8 @@
 package com.spendlens.feature.expenses.edit
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -197,9 +196,11 @@ private fun CategoryPicker(
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
         )
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        // Wraps rather than scrolls sideways: at a 200% font scale only two chips fitted on one line,
+        // and the rest were reachable only by a horizontal swipe nothing on screen suggested.
+        FlowRow(
             horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Small),
         ) {
             categories.forEach { category ->
                 FilterChip(
