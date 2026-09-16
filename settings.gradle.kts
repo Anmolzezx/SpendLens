@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "SpendLens"
 include(":app")
+include(":benchmark")
 include(":core:applock")
 include(":core:common")
 include(":core:model")
