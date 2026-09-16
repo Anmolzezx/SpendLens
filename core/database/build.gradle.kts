@@ -11,6 +11,10 @@ android {
         // Robolectric needs a real Android runtime; the DAO tests run on the JVM in CI rather than
         // needing an emulator, so unit tests must see android resources.
         testOptions.unitTests.isIncludeAndroidResources = true
+
+        // Encryption is the one part of this module that cannot be tested on the JVM: SQLCipher is a
+        // native library, and the key lives in the device's keystore.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 }
 
@@ -25,10 +29,15 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.sqlcipher.android)
     ksp(libs.room.compiler)
 
     testImplementation(libs.room.testing)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 }

@@ -1,19 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The expense database is encrypted with a key that only this device's keystore can decrypt, so a
+    restored copy would be an unreadable file that looks like data. Expenses come back by syncing
+    instead — that is what the sync layer is for.
+
+    Receipt photos are excluded for a related reason: photo paths are local to the device that took
+    them, so restored images would be orphans no expense points at.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="receipts" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="receipts" />
     </device-transfer>
-    -->
 </data-extraction-rules>

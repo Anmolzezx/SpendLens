@@ -38,7 +38,7 @@ import javax.inject.Singleton
 internal class WorkManagerSyncManager
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        @param:ApplicationContext private val context: Context,
     ) : SyncManager {
         // Lazy: this is injected into the Application, before WorkManager can be initialised from it.
         private val workManager by lazy { WorkManager.getInstance(context) }

@@ -23,7 +23,7 @@ internal const val UNLOCK_AUTHENTICATORS =
 internal class BiometricDeviceAuthenticator
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        @param:ApplicationContext private val context: Context,
     ) : DeviceAuthenticator {
         override fun canAuthenticate(): Boolean =
             BiometricManager.from(context).canAuthenticate(UNLOCK_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS
