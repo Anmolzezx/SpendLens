@@ -56,6 +56,16 @@ class OfflineFirstExpenseRepository
          * Read and write share a transaction, so a sync recording a newer version in between cannot be
          * overwritten with the old one.
          */
+        override fun observeExpensesInRange(
+            firstMonth: YearMonth,
+            lastMonth: YearMonth,
+        ): Flow<List<Expense>> =
+            expenseDao
+                .observeExpensesBetween(
+                    startDayInclusive = firstMonth.atDay(1).toEpochDay(),
+                    endDayExclusive = lastMonth.plusMonths(1).atDay(1).toEpochDay(),
+                ).map { entities -> entities.map { it.asDomainModel() } }
+
         override suspend fun upsert(expense: Expense) =
             withContext(ioDispatcher) {
                 transaction {

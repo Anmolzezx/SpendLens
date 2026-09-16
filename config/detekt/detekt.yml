@@ -33,6 +33,9 @@ style:
     ignorePropertyDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
     ignoreAnnotation: true
+    # A preview is a fixture: its numbers are chosen to show a shape, and naming each one would say
+    # less than the literal does. The same numbers in real code are still flagged.
+    ignoreAnnotated: [ 'Preview', 'ThemePreviews' ]
   MaxLineLength:
     maxLineLength: 120
   ForbiddenComment:

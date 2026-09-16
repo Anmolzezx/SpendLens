@@ -25,6 +25,15 @@ interface ExpenseRepository {
     fun observeExpensesIn(month: YearMonth): Flow<List<Expense>>
 
     /**
+     * Every expense from [firstMonth] to [lastMonth], both included — one query for a trend rather than
+     * one per month.
+     */
+    fun observeExpensesInRange(
+        firstMonth: YearMonth,
+        lastMonth: YearMonth,
+    ): Flow<List<Expense>>
+
+    /**
      * Creates or replaces. The implementation stamps `updatedAt` and marks the row `PENDING`;
      * callers do not get to decide sync state, or they would eventually forget to set it.
      */

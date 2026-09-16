@@ -31,6 +31,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.spendlens.core.designsystem.component.AmountEmphasis
 import com.spendlens.core.designsystem.component.AmountText
+import com.spendlens.core.designsystem.component.Bar
+import com.spendlens.core.designsystem.component.BarChart
 import com.spendlens.core.designsystem.component.EmptyState
 import com.spendlens.core.designsystem.component.MeterBar
 import com.spendlens.core.designsystem.preview.ThemePreviews
@@ -73,6 +75,7 @@ internal fun InsightsContent(
                 contentPadding = padding,
             ) {
                 item { MonthHeader(uiState) }
+                item { SpendTrend(trend = uiState.trend) }
                 item {
                     Text(
                         text = stringResource(R.string.insights_by_category),
@@ -139,6 +142,37 @@ private fun MonthHeader(
             segments = segmentsOf(uiState.categories),
             stateDescription = descriptions.joinToString(separator = ", "),
             modifier = Modifier.padding(top = Spacing.Small),
+        )
+    }
+}
+
+/** Six months of totals, with the month on screen picked out. */
+@Composable
+private fun SpendTrend(
+    trend: List<MonthTrendUiModel>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.Large, vertical = Spacing.Small),
+        verticalArrangement = Arrangement.spacedBy(Spacing.Small),
+    ) {
+        Text(
+            text = stringResource(R.string.insights_trend),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        BarChart(
+            bars = trend.map { month ->
+                Bar(
+                    label = month.label,
+                    fraction = month.fraction,
+                    emphasised = month.isCurrentMonth,
+                    // The bars are the only place these numbers appear, so each one says its own.
+                    contentDescription = stringResource(R.string.insights_trend_month, month.label, month.amount),
+                )
+            },
         )
     }
 }

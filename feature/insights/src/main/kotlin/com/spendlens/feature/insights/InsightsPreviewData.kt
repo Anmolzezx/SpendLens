@@ -1,12 +1,16 @@
 package com.spendlens.feature.insights
 
+import com.spendlens.core.model.Expense
 import com.spendlens.core.model.categorySpend
 import com.spendlens.core.model.formatAsMoney
 import com.spendlens.core.model.monthlyTotalMinor
+import com.spendlens.core.model.monthlyTotals
 import com.spendlens.core.model.sample.SampleBudgets
 import com.spendlens.core.model.sample.SampleCategories
 import com.spendlens.core.model.sample.SampleExpenses
 import com.spendlens.core.model.toAmountInput
+import com.spendlens.core.model.trailingMonths
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -48,6 +52,21 @@ internal object InsightsPreviewData {
                         shareOfTotal = if (totalMinor > 0L) spend.spentMinor.toFloat() / totalMinor else 0f,
                     )
                 }.toImmutableList(),
+            trend = trend(expenses),
         )
+    }
+
+    private fun trend(expenses: List<Expense>): ImmutableList<MonthTrendUiModel> {
+        val totals = monthlyTotals(expenses, trailingMonths(month, count = 6))
+        val biggest = totals.maxOf { it.totalMinor }
+        return totals
+            .map { total ->
+                MonthTrendUiModel(
+                    label = total.month.format(DateTimeFormatter.ofPattern("LLL", locale)),
+                    amount = total.totalMinor.formatAsMoney(CURRENCY, locale),
+                    fraction = if (biggest > 0L) total.totalMinor.toFloat() / biggest else 0f,
+                    isCurrentMonth = total.month == month,
+                )
+            }.toImmutableList()
     }
 }

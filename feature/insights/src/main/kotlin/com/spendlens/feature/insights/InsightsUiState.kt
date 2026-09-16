@@ -15,8 +15,20 @@ sealed interface InsightsUiState {
         val monthLabel: String,
         val totalSpend: String,
         val categories: ImmutableList<CategoryInsightUiModel>,
+        /** Oldest month first, ending with the month on screen. */
+        val trend: ImmutableList<MonthTrendUiModel>,
     ) : InsightsUiState
 }
+
+@Immutable
+data class MonthTrendUiModel(
+    /** Short, because six of them share a phone's width: "Sep". */
+    val label: String,
+    val amount: String,
+    /** Height as a share of the biggest month in the window, 0f..1f. */
+    val fraction: Float,
+    val isCurrentMonth: Boolean,
+)
 
 /**
  * Everything here is either already formatted or a plain value.

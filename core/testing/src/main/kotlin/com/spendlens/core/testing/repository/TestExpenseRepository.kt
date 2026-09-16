@@ -42,6 +42,14 @@ class TestExpenseRepository(
     override fun observeExpensesIn(month: YearMonth): Flow<List<Expense>> =
         backing.map { expenses -> expenses.visible().filter { it.occurredIn(month) } }
 
+    override fun observeExpensesInRange(
+        firstMonth: YearMonth,
+        lastMonth: YearMonth,
+    ): Flow<List<Expense>> =
+        backing.map { expenses ->
+            expenses.visible().filter { YearMonth.from(it.occurredOn) in firstMonth..lastMonth }
+        }
+
     override suspend fun upsert(expense: Expense) {
         val stored = backing.value.firstOrNull { it.id == expense.id }
         val stamped = expense.copy(

@@ -63,3 +63,37 @@ fun categorySpend(
             )
         }.sortedByDescending { it.spentMinor }
 }
+
+/** One month's total, for a spending trend. */
+data class MonthTotal(
+    val month: YearMonth,
+    val totalMinor: Long,
+)
+
+/** [count] months ending with [endMonth], oldest first. */
+fun trailingMonths(
+    endMonth: YearMonth,
+    count: Int,
+): List<YearMonth> {
+    require(count > 0) { "A trend needs at least one month" }
+    return (count - 1 downTo 0).map { endMonth.minusMonths(it.toLong()) }
+}
+
+/**
+ * Totals for exactly [months], in that order, tombstones excluded.
+ *
+ * A month with no spending is included as zero rather than dropped: a gap in a trend is information,
+ * and a chart that silently skips it would compare August to June as though they were adjacent.
+ */
+fun monthlyTotals(
+    expenses: List<Expense>,
+    months: List<YearMonth>,
+): List<MonthTotal> {
+    val byMonth = expenses
+        .asSequence()
+        .filterNot { it.isDeleted }
+        .groupingBy { YearMonth.from(it.occurredOn) }
+        .fold(0L) { sum, expense -> sum + expense.amountMinor }
+
+    return months.map { month -> MonthTotal(month, byMonth[month] ?: 0L) }
+}
