@@ -23,8 +23,14 @@ android {
     buildTypes {
         release {
             optimization {
-                enable = false
+                // R8 on: this is the build that ships. Everything below has been checked to survive it —
+                // see proguard-rules.pro for the three libraries that needed help.
+                enable = true
             }
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Debug keys until Phase 6 adds a real keystore: without a signature the APK cannot be
+            // installed, and a release build nobody has ever run is not a verified release build.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     buildFeatures {

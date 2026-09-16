@@ -12,6 +12,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SpendLens">
+        <!--
+            WorkManager normally initialises itself at startup with a default configuration, which cannot
+            construct workers that need injected dependencies. Removing that initializer makes it ask this
+            Application (a Configuration.Provider) instead, which supplies Hilt's factory.
+
+            It lives here rather than in :sync because lint checks the app's own manifest for it, and it is
+            the Application — also here — that answers in its place.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
